@@ -64,7 +64,7 @@
       gap: 0.5rem;
     }
 
-    input[type="text"] {
+    input[type="text"], textarea {
       flex: 1;
       padding: 0.6rem 0.8rem;
       border: 1px solid #5a3010;
@@ -75,9 +75,17 @@
       font-size: 1rem;
     }
 
-    input[type="text"]::placeholder { color: #6b4c30; }
+    textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 80px;
+    }
 
-    input[type="text"]:focus {
+    input[type="text"]::placeholder,
+    textarea::placeholder { color: #6b4c30; }
+
+    input[type="text"]:focus,
+    textarea:focus {
       outline: none;
       border-color: #c8922a;
     }
@@ -133,6 +141,15 @@
 
     .btn-clear:hover { border-color: #8b2500; color: #c8922a; }
 
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #c8922a;
+      color: #c8922a;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary:hover { background: #3c1800; }
+
     ul {
       list-style: none;
       display: flex;
@@ -167,6 +184,7 @@
       font-weight: bold;
     }
 
+    /* Result card */
     .result-card {
       text-align: center;
       display: none;
@@ -177,13 +195,142 @@
     .result-name {
       font-size: 1.8rem;
       color: #f8d080;
-      margin: 0.5rem 0;
+      margin: 0.5rem 0 0.3rem;
       word-break: break-word;
     }
 
     .result-sub {
       color: #b09070;
       font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .rng-display {
+      display: inline-block;
+      background: #1a0a00;
+      border: 1px solid #5a3010;
+      border-radius: 4px;
+      padding: 0.4rem 1rem;
+      color: #b09070;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .rng-display span {
+      color: #c8922a;
+      font-weight: bold;
+    }
+
+    /* Review form */
+    .review-form {
+      display: none;
+      margin-top: 1rem;
+      border-top: 1px solid #5a3010;
+      padding-top: 1rem;
+    }
+
+    .review-form.visible { display: block; }
+
+    .review-form h3 {
+      color: #c8922a;
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .star-row {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .star {
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: #5a3010;
+      transition: color 0.15s;
+      user-select: none;
+    }
+
+    .star.active { color: #c8922a; }
+    .star:hover { color: #e0a830; }
+
+    .review-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    /* Reviews history */
+    .reviews-section {
+      display: none;
+    }
+
+    .reviews-section.visible { display: block; }
+
+    .review-entry {
+      background: #1a0a00;
+      border: 1px solid #3c1800;
+      border-radius: 4px;
+      padding: 0.8rem;
+      margin-bottom: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .review-entry:last-child { margin-bottom: 0; }
+
+    .review-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.4rem;
+    }
+
+    .review-whisky-name {
+      color: #f8d080;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .review-date {
+      color: #5a3010;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+
+    .review-stars {
+      color: #c8922a;
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+      letter-spacing: 1px;
+    }
+
+    .review-notes {
+      color: #b09070;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .review-entry-actions {
+      margin-top: 0.4rem;
+      text-align: right;
+    }
+
+    .btn-delete-review {
+      background: transparent;
+      border: none;
+      color: #5a3010;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+    }
+
+    .btn-delete-review:hover { color: #8b2500; }
+
+    .no-reviews {
+      color: #5a3010;
+      font-style: italic;
+      font-size: 0.9rem;
     }
 
     .header-row {
@@ -248,11 +395,41 @@
       🎲 Select Tonight's Whisky
     </button>
 
-    <!-- Result -->
+    <!-- Result + inline review form -->
     <div class="card result-card" id="resultCard">
       <h2>Tonight's Dram</h2>
       <div class="result-name" id="resultName"></div>
       <div class="result-sub">Sláinte! 🥃</div>
+      <div class="rng-display" id="rngDisplay"></div>
+      <button class="btn-secondary" onclick="toggleReviewForm()">✍️ Add Tasting Notes</button>
+
+      <div class="review-form" id="reviewForm">
+        <h3>Rate &amp; Review</h3>
+        <div class="star-row" id="starRow">
+          <span class="star" data-value="1" onclick="setRating(1)">★</span>
+          <span class="star" data-value="2" onclick="setRating(2)">★</span>
+          <span class="star" data-value="3" onclick="setRating(3)">★</span>
+          <span class="star" data-value="4" onclick="setRating(4)">★</span>
+          <span class="star" data-value="5" onclick="setRating(5)">★</span>
+        </div>
+        <textarea id="reviewNotes" placeholder="Tasting notes… e.g. rich dried fruit, hint of peat, long finish"></textarea>
+        <div class="review-actions">
+          <button class="btn-add" onclick="saveReview()">Save Review</button>
+          <button class="btn-clear" onclick="toggleReviewForm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews history -->
+    <div class="card reviews-section" id="reviewsSection">
+      <div class="header-row">
+        <h2>Tasting Notes</h2>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span class="count-badge" id="reviewCountBadge">0</span>
+          <button class="btn-clear" onclick="clearReviews()">Clear all</button>
+        </div>
+      </div>
+      <div id="reviewsList"></div>
     </div>
 
   </div>
@@ -261,12 +438,20 @@
 
   <script>
     const STORAGE_KEY = 'whisky-club-list';
+    const REVIEWS_KEY = 'whisky-club-reviews';
 
     let whiskies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let reviews = JSON.parse(localStorage.getItem(REVIEWS_KEY) || '[]');
     let lastSelected = null;
+    let currentRating = 0;
+    let lastRngInfo = null;
 
     function save() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(whiskies));
+    }
+
+    function saveReviews() {
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
     }
 
     function render() {
@@ -294,6 +479,48 @@
 
       badge.textContent = whiskies.length;
       btn.disabled = whiskies.length === 0;
+    }
+
+    function renderReviews() {
+      const container = document.getElementById('reviewsList');
+      const section = document.getElementById('reviewsSection');
+      const badge = document.getElementById('reviewCountBadge');
+
+      badge.textContent = reviews.length;
+
+      if (reviews.length === 0) {
+        section.classList.remove('visible');
+        return;
+      }
+
+      section.classList.add('visible');
+      container.innerHTML = '';
+
+      // Show newest first
+      reviews.slice().reverse().forEach(function(r, idx) {
+        const realIdx = reviews.length - 1 - idx;
+        const entry = document.createElement('div');
+        entry.className = 'review-entry';
+
+        const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '';
+
+        entry.innerHTML =
+          '<div class="review-entry-header">' +
+            '<span class="review-whisky-name">' + escHtml(r.whisky) + '</span>' +
+            '<span class="review-date">' + escHtml(r.date) + '</span>' +
+          '</div>' +
+          (stars ? '<div class="review-stars">' + stars + '</div>' : '') +
+          (r.notes ? '<div class="review-notes">' + escHtml(r.notes) + '</div>' : '') +
+          '<div class="review-entry-actions">' +
+            '<button class="btn-delete-review" onclick="deleteReview(' + realIdx + ')">✕ Delete</button>' +
+          '</div>';
+
+        container.appendChild(entry);
+      });
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function addWhisky() {
@@ -335,12 +562,80 @@
 
     function selectWhisky() {
       if (whiskies.length === 0) return;
-      const index = Math.floor(Math.random() * whiskies.length);
+      const rng = Math.random();
+      const index = Math.floor(rng * whiskies.length);
       lastSelected = whiskies[index];
+      lastRngInfo = { rng: rng, index: index, total: whiskies.length };
+
       document.getElementById('resultName').textContent = lastSelected;
+      document.getElementById('rngDisplay').innerHTML =
+        'Random number: <span>' + rng.toFixed(6) + '</span> &rarr; pick <span>' + (index + 1) + '</span> of <span>' + whiskies.length + '</span>';
+
       document.getElementById('resultCard').classList.add('visible');
+
+      // Reset review form
+      currentRating = 0;
+      updateStars();
+      document.getElementById('reviewNotes').value = '';
+      document.getElementById('reviewForm').classList.remove('visible');
+
       render();
       document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function toggleReviewForm() {
+      const form = document.getElementById('reviewForm');
+      form.classList.toggle('visible');
+      if (form.classList.contains('visible')) {
+        document.getElementById('reviewNotes').focus();
+      }
+    }
+
+    function setRating(value) {
+      currentRating = value;
+      updateStars();
+    }
+
+    function updateStars() {
+      document.querySelectorAll('.star').forEach(function(star) {
+        star.classList.toggle('active', parseInt(star.dataset.value) <= currentRating);
+      });
+    }
+
+    function saveReview() {
+      if (!lastSelected) return;
+      const notes = document.getElementById('reviewNotes').value.trim();
+
+      if (!currentRating && !notes) {
+        document.getElementById('reviewNotes').style.borderColor = '#8b2500';
+        setTimeout(function() { document.getElementById('reviewNotes').style.borderColor = ''; }, 1000);
+        return;
+      }
+
+      const now = new Date();
+      const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      reviews.push({ whisky: lastSelected, rating: currentRating, notes: notes, date: date });
+      saveReviews();
+      renderReviews();
+
+      document.getElementById('reviewForm').classList.remove('visible');
+      document.getElementById('reviewsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function deleteReview(index) {
+      if (!confirm('Delete this tasting note?')) return;
+      reviews.splice(index, 1);
+      saveReviews();
+      renderReviews();
+    }
+
+    function clearReviews() {
+      if (reviews.length === 0) return;
+      if (!confirm('Delete all tasting notes?')) return;
+      reviews = [];
+      saveReviews();
+      renderReviews();
     }
 
     // Allow pressing Enter to add
@@ -348,7 +643,23 @@
       if (e.key === 'Enter') addWhisky();
     });
 
+    // Star hover effect
+    document.querySelectorAll('.star').forEach(function(star) {
+      star.addEventListener('mouseover', function() {
+        const val = parseInt(star.dataset.value);
+        document.querySelectorAll('.star').forEach(function(s) {
+          s.style.color = parseInt(s.dataset.value) <= val ? '#e0a830' : '';
+        });
+      });
+      star.addEventListener('mouseleave', function() {
+        document.querySelectorAll('.star').forEach(function(s) {
+          s.style.color = '';
+        });
+      });
+    });
+
     render();
+    renderReviews();
   </script>
 
 </body>
