@@ -64,7 +64,7 @@
       gap: 0.5rem;
     }
 
-    input[type="text"], textarea {
+    input[type="text"], input[type="password"], textarea {
       flex: 1;
       padding: 0.6rem 0.8rem;
       border: 1px solid #5a3010;
@@ -82,9 +82,11 @@
     }
 
     input[type="text"]::placeholder,
+    input[type="password"]::placeholder,
     textarea::placeholder { color: #6b4c30; }
 
     input[type="text"]:focus,
+    input[type="password"]:focus,
     textarea:focus {
       outline: none;
       border-color: #c8922a;
@@ -107,6 +109,7 @@
     }
 
     .btn-add:hover { background: #e0a830; }
+    .btn-add:disabled { background: #5a3010; color: #3c1800; cursor: not-allowed; }
 
     .btn-remove {
       background: transparent;
@@ -149,6 +152,16 @@
     }
 
     .btn-secondary:hover { background: #3c1800; }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid #5a3010;
+      color: #b09070;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.7rem;
+    }
+
+    .btn-icon:hover { border-color: #c8922a; color: #c8922a; }
 
     ul {
       list-style: none;
@@ -291,11 +304,24 @@
       font-size: 1rem;
     }
 
+    .review-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.15rem;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+
     .review-date {
       color: #5a3010;
       font-size: 0.8rem;
-      flex-shrink: 0;
-      margin-left: 0.5rem;
+    }
+
+    .review-author {
+      color: #8b5030;
+      font-size: 0.8rem;
+      font-style: italic;
     }
 
     .review-stars {
@@ -327,10 +353,81 @@
 
     .btn-delete-review:hover { color: #8b2500; }
 
-    .no-reviews {
+    /* Cloud sync card */
+    .sync-card summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sync-card summary::-webkit-details-marker { display: none; }
+
+    .sync-card summary h2 {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sync-card details[open] summary {
+      border-bottom: 1px solid #5a3010;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .sync-status {
+      font-size: 0.8rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+    }
+
+    .sync-status.ok     { background: #1a3c00; color: #6fcf40; }
+    .sync-status.err    { background: #3c0000; color: #cf4040; }
+    .sync-status.busy   { background: #3c2000; color: #c8922a; }
+    .sync-status.off    { background: #1a0a00; color: #5a3010; border: 1px solid #3c1800; }
+
+    .sync-form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .sync-form-row label {
+      color: #b09070;
+      font-size: 0.85rem;
+    }
+
+    .sync-help {
+      font-size: 0.8rem;
       color: #5a3010;
-      font-style: italic;
-      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.8rem;
+    }
+
+    .sync-help a {
+      color: #8b5030;
+    }
+
+    .sync-btn-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .sync-bin-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .sync-bin-row input { font-family: monospace; font-size: 0.85rem; }
+
+    .divider {
+      color: #5a3010;
+      font-size: 0.8rem;
+      align-self: center;
     }
 
     .header-row {
@@ -405,6 +502,10 @@
 
       <div class="review-form" id="reviewForm">
         <h3>Rate &amp; Review</h3>
+        <div class="sync-form-row">
+          <label for="reviewerName">Your name (optional)</label>
+          <input type="text" id="reviewerName" placeholder="e.g. Hamish" maxlength="40" />
+        </div>
         <div class="star-row" id="starRow">
           <span class="star" data-value="1" onclick="setRating(1)">★</span>
           <span class="star" data-value="2" onclick="setRating(2)">★</span>
@@ -426,10 +527,48 @@
         <h2>Tasting Notes</h2>
         <div style="display:flex;gap:0.5rem;align-items:center;">
           <span class="count-badge" id="reviewCountBadge">0</span>
+          <button class="btn-icon" onclick="syncPull()" title="Refresh from cloud">↻ Refresh</button>
           <button class="btn-clear" onclick="clearReviews()">Clear all</button>
         </div>
       </div>
       <div id="reviewsList"></div>
+    </div>
+
+    <!-- Cloud sync settings -->
+    <div class="card sync-card">
+      <details id="syncDetails">
+        <summary>
+          <h2>☁️ Cloud Sync</h2>
+          <span class="sync-status off" id="syncStatus">Not configured</span>
+        </summary>
+
+        <p class="sync-help">
+          Reviews are shared via <a href="https://jsonbin.io" target="_blank" rel="noopener">JSONBin.io</a>.
+          Everyone in the club needs the same <strong>Master Key</strong> and <strong>Bin ID</strong>.<br><br>
+          To get started: sign up at jsonbin.io → Dashboard → API Keys → copy your Master Key.
+        </p>
+
+        <div class="sync-form-row">
+          <label for="masterKeyInput">Master Key</label>
+          <input type="password" id="masterKeyInput" placeholder="$2a$10$..." autocomplete="off" />
+        </div>
+
+        <div class="sync-form-row">
+          <label>Bin ID</label>
+          <div class="sync-bin-row">
+            <input type="text" id="binIdInput" placeholder="64f3a..." style="font-family:monospace;font-size:0.85rem;" />
+            <span class="divider">or</span>
+            <button class="btn-secondary" onclick="createBin()">Create new bin</button>
+          </div>
+        </div>
+
+        <div class="sync-btn-row">
+          <button class="btn-add" onclick="saveConfig()">Connect</button>
+          <button class="btn-clear" onclick="clearConfig()">Disconnect</button>
+        </div>
+
+        <div id="syncMessage" style="margin-top:0.6rem;font-size:0.85rem;color:#b09070;"></div>
+      </details>
     </div>
 
   </div>
@@ -437,38 +576,44 @@
   <footer>Whisky Club Selector &mdash; sip responsibly</footer>
 
   <script>
-    const STORAGE_KEY = 'whisky-club-list';
-    const REVIEWS_KEY = 'whisky-club-reviews';
+    const STORAGE_KEY   = 'whisky-club-list';
+    const REVIEWS_KEY   = 'whisky-club-reviews';
+    const JSONBIN_KEY   = 'whisky-club-jsonbin-key';
+    const JSONBIN_BIN   = 'whisky-club-jsonbin-bin';
+    const JSONBIN_BASE  = 'https://api.jsonbin.io/v3';
 
-    let whiskies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    let reviews = JSON.parse(localStorage.getItem(REVIEWS_KEY) || '[]');
+    let whiskies     = JSON.parse(localStorage.getItem(STORAGE_KEY)  || '[]');
+    let reviews      = JSON.parse(localStorage.getItem(REVIEWS_KEY)  || '[]');
     let lastSelected = null;
     let currentRating = 0;
-    let lastRngInfo = null;
+
+    // ── Persistence ──────────────────────────────────────────────────────────
 
     function save() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(whiskies));
     }
 
-    function saveReviews() {
+    function saveReviewsLocal() {
       localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
     }
 
+    // ── Whisky list ───────────────────────────────────────────────────────────
+
     function render() {
-      const list = document.getElementById('whiskyList');
+      const list  = document.getElementById('whiskyList');
       const badge = document.getElementById('countBadge');
-      const btn = document.getElementById('selectBtn');
+      const btn   = document.getElementById('selectBtn');
 
       list.innerHTML = '';
       whiskies.forEach(function(name, i) {
-        const li = document.createElement('li');
+        const li   = document.createElement('li');
         if (name === lastSelected) li.classList.add('selected');
 
         const span = document.createElement('span');
         span.textContent = name;
 
         const del = document.createElement('button');
-        del.className = 'btn-remove';
+        del.className   = 'btn-remove';
         del.textContent = 'Remove';
         del.onclick = function() { removeWhisky(i); };
 
@@ -481,59 +626,16 @@
       btn.disabled = whiskies.length === 0;
     }
 
-    function renderReviews() {
-      const container = document.getElementById('reviewsList');
-      const section = document.getElementById('reviewsSection');
-      const badge = document.getElementById('reviewCountBadge');
-
-      badge.textContent = reviews.length;
-
-      if (reviews.length === 0) {
-        section.classList.remove('visible');
-        return;
-      }
-
-      section.classList.add('visible');
-      container.innerHTML = '';
-
-      // Show newest first
-      reviews.slice().reverse().forEach(function(r, idx) {
-        const realIdx = reviews.length - 1 - idx;
-        const entry = document.createElement('div');
-        entry.className = 'review-entry';
-
-        const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '';
-
-        entry.innerHTML =
-          '<div class="review-entry-header">' +
-            '<span class="review-whisky-name">' + escHtml(r.whisky) + '</span>' +
-            '<span class="review-date">' + escHtml(r.date) + '</span>' +
-          '</div>' +
-          (stars ? '<div class="review-stars">' + stars + '</div>' : '') +
-          (r.notes ? '<div class="review-notes">' + escHtml(r.notes) + '</div>' : '') +
-          '<div class="review-entry-actions">' +
-            '<button class="btn-delete-review" onclick="deleteReview(' + realIdx + ')">✕ Delete</button>' +
-          '</div>';
-
-        container.appendChild(entry);
-      });
-    }
-
-    function escHtml(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     function addWhisky() {
       const input = document.getElementById('whiskyInput');
-      const name = input.value.trim();
+      const name  = input.value.trim();
       if (!name) return;
       if (whiskies.includes(name)) {
-        input.style.borderColor = '#8b2500';
-        setTimeout(function() { input.style.borderColor = ''; }, 1000);
+        flash(input);
         return;
       }
       whiskies.push(name);
-      input.value = '';
+      input.value  = '';
       lastSelected = null;
       document.getElementById('resultCard').classList.remove('visible');
       save();
@@ -553,27 +655,28 @@
     function clearAll() {
       if (whiskies.length === 0) return;
       if (!confirm('Remove all whiskies from the list?')) return;
-      whiskies = [];
+      whiskies     = [];
       lastSelected = null;
       document.getElementById('resultCard').classList.remove('visible');
       save();
       render();
     }
 
+    // ── Selection ─────────────────────────────────────────────────────────────
+
     function selectWhisky() {
       if (whiskies.length === 0) return;
-      const rng = Math.random();
+      const rng   = Math.random();
       const index = Math.floor(rng * whiskies.length);
       lastSelected = whiskies[index];
-      lastRngInfo = { rng: rng, index: index, total: whiskies.length };
 
       document.getElementById('resultName').textContent = lastSelected;
-      document.getElementById('rngDisplay').innerHTML =
-        'Random number: <span>' + rng.toFixed(6) + '</span> &rarr; pick <span>' + (index + 1) + '</span> of <span>' + whiskies.length + '</span>';
+      document.getElementById('rngDisplay').innerHTML   =
+        'Random number: <span>' + rng.toFixed(6) + '</span> &rarr; pick <span>' +
+        (index + 1) + '</span> of <span>' + whiskies.length + '</span>';
 
       document.getElementById('resultCard').classList.add('visible');
 
-      // Reset review form
       currentRating = 0;
       updateStars();
       document.getElementById('reviewNotes').value = '';
@@ -582,6 +685,8 @@
       render();
       document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+
+    // ── Review form ───────────────────────────────────────────────────────────
 
     function toggleReviewForm() {
       const form = document.getElementById('reviewForm');
@@ -602,48 +707,227 @@
       });
     }
 
-    function saveReview() {
+    async function saveReview() {
       if (!lastSelected) return;
-      const notes = document.getElementById('reviewNotes').value.trim();
+      const notes  = document.getElementById('reviewNotes').value.trim();
+      const author = document.getElementById('reviewerName').value.trim();
 
       if (!currentRating && !notes) {
-        document.getElementById('reviewNotes').style.borderColor = '#8b2500';
-        setTimeout(function() { document.getElementById('reviewNotes').style.borderColor = ''; }, 1000);
+        flash(document.getElementById('reviewNotes'));
         return;
       }
 
-      const now = new Date();
+      const now  = new Date();
       const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-      reviews.push({ whisky: lastSelected, rating: currentRating, notes: notes, date: date });
-      saveReviews();
+      reviews.push({ whisky: lastSelected, rating: currentRating, notes: notes, author: author, date: date });
+      saveReviewsLocal();
       renderReviews();
 
       document.getElementById('reviewForm').classList.remove('visible');
+
+      await syncPush();
+
       document.getElementById('reviewsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function deleteReview(index) {
       if (!confirm('Delete this tasting note?')) return;
       reviews.splice(index, 1);
-      saveReviews();
+      saveReviewsLocal();
       renderReviews();
+      syncPush();
     }
 
     function clearReviews() {
       if (reviews.length === 0) return;
-      if (!confirm('Delete all tasting notes?')) return;
+      if (!confirm('Delete all tasting notes? This will also clear them from the cloud.')) return;
       reviews = [];
-      saveReviews();
+      saveReviewsLocal();
       renderReviews();
+      syncPush();
     }
 
-    // Allow pressing Enter to add
-    document.getElementById('whiskyInput').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') addWhisky();
-    });
+    // ── Reviews render ────────────────────────────────────────────────────────
 
-    // Star hover effect
+    function renderReviews() {
+      const container = document.getElementById('reviewsList');
+      const section   = document.getElementById('reviewsSection');
+      const badge     = document.getElementById('reviewCountBadge');
+
+      badge.textContent = reviews.length;
+
+      if (reviews.length === 0) {
+        section.classList.remove('visible');
+        return;
+      }
+
+      section.classList.add('visible');
+      container.innerHTML = '';
+
+      reviews.slice().reverse().forEach(function(r, idx) {
+        const realIdx = reviews.length - 1 - idx;
+        const entry   = document.createElement('div');
+        entry.className = 'review-entry';
+
+        const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '';
+
+        entry.innerHTML =
+          '<div class="review-entry-header">' +
+            '<span class="review-whisky-name">' + escHtml(r.whisky) + '</span>' +
+            '<div class="review-meta">' +
+              '<span class="review-date">' + escHtml(r.date) + '</span>' +
+              (r.author ? '<span class="review-author">— ' + escHtml(r.author) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          (stars ? '<div class="review-stars">' + stars + '</div>' : '') +
+          (r.notes ? '<div class="review-notes">' + escHtml(r.notes) + '</div>' : '') +
+          '<div class="review-entry-actions">' +
+            '<button class="btn-delete-review" onclick="deleteReview(' + realIdx + ')">✕ Delete</button>' +
+          '</div>';
+
+        container.appendChild(entry);
+      });
+    }
+
+    // ── Cloud sync ────────────────────────────────────────────────────────────
+
+    function getConfig() {
+      return {
+        key:   localStorage.getItem(JSONBIN_KEY),
+        binId: localStorage.getItem(JSONBIN_BIN)
+      };
+    }
+
+    function setSyncStatus(state, text) {
+      const el = document.getElementById('syncStatus');
+      el.className = 'sync-status ' + state;
+      el.textContent = text;
+    }
+
+    function setSyncMessage(text) {
+      document.getElementById('syncMessage').textContent = text;
+    }
+
+    async function syncPull() {
+      const { key, binId } = getConfig();
+      if (!key || !binId) return;
+
+      setSyncStatus('busy', '⟳ Fetching…');
+      try {
+        const res = await fetch(JSONBIN_BASE + '/b/' + binId + '/latest', {
+          headers: { 'X-Master-Key': key }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        reviews = Array.isArray(data.record.reviews) ? data.record.reviews : [];
+        saveReviewsLocal();
+        renderReviews();
+        setSyncStatus('ok', '✓ Synced');
+      } catch (e) {
+        setSyncStatus('err', '✗ Error');
+        setSyncMessage('Could not fetch reviews: ' + e.message);
+      }
+    }
+
+    async function syncPush() {
+      const { key, binId } = getConfig();
+      if (!key || !binId) return;
+
+      setSyncStatus('busy', '⟳ Saving…');
+      try {
+        const res = await fetch(JSONBIN_BASE + '/b/' + binId, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': key
+          },
+          body: JSON.stringify({ reviews: reviews })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        setSyncStatus('ok', '✓ Synced');
+      } catch (e) {
+        setSyncStatus('err', '✗ Error');
+        setSyncMessage('Could not save reviews: ' + e.message);
+      }
+    }
+
+    async function createBin() {
+      const key = document.getElementById('masterKeyInput').value.trim();
+      if (!key) {
+        setSyncMessage('Enter your Master Key first.');
+        return;
+      }
+      setSyncMessage('Creating bin…');
+      try {
+        const res = await fetch(JSONBIN_BASE + '/b', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': key,
+            'X-Bin-Name': 'whisky-club-reviews',
+            'X-Bin-Private': 'false'
+          },
+          body: JSON.stringify({ reviews: [] })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const id   = data.metadata.id;
+        document.getElementById('binIdInput').value = id;
+        setSyncMessage('Bin created! ID: ' + id + ' — share this ID and your Master Key with club members, then click Connect.');
+      } catch (e) {
+        setSyncMessage('Failed to create bin: ' + e.message);
+      }
+    }
+
+    function saveConfig() {
+      const key   = document.getElementById('masterKeyInput').value.trim();
+      const binId = document.getElementById('binIdInput').value.trim();
+      if (!key || !binId) {
+        setSyncMessage('Both Master Key and Bin ID are required.');
+        return;
+      }
+      localStorage.setItem(JSONBIN_KEY, key);
+      localStorage.setItem(JSONBIN_BIN, binId);
+      setSyncMessage('');
+      syncPull();
+    }
+
+    function clearConfig() {
+      if (!confirm('Disconnect from cloud sync? Reviews already saved locally will remain.')) return;
+      localStorage.removeItem(JSONBIN_KEY);
+      localStorage.removeItem(JSONBIN_BIN);
+      document.getElementById('masterKeyInput').value = '';
+      document.getElementById('binIdInput').value     = '';
+      setSyncStatus('off', 'Not configured');
+      setSyncMessage('Disconnected.');
+    }
+
+    function loadConfigIntoForm() {
+      const { key, binId } = getConfig();
+      if (key)   document.getElementById('masterKeyInput').value = key;
+      if (binId) document.getElementById('binIdInput').value     = binId;
+      if (key && binId) {
+        setSyncStatus('busy', '⟳ Connecting…');
+        syncPull();
+      }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function flash(el) {
+      el.style.borderColor = '#8b2500';
+      setTimeout(function() { el.style.borderColor = ''; }, 1000);
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Star hover ────────────────────────────────────────────────────────────
+
     document.querySelectorAll('.star').forEach(function(star) {
       star.addEventListener('mouseover', function() {
         const val = parseInt(star.dataset.value);
@@ -652,14 +936,21 @@
         });
       });
       star.addEventListener('mouseleave', function() {
-        document.querySelectorAll('.star').forEach(function(s) {
-          s.style.color = '';
-        });
+        document.querySelectorAll('.star').forEach(function(s) { s.style.color = ''; });
       });
     });
 
+    // ── Enter to add ──────────────────────────────────────────────────────────
+
+    document.getElementById('whiskyInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') addWhisky();
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
     render();
     renderReviews();
+    loadConfigIntoForm();
   </script>
 
 </body>
