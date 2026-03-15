@@ -1,6 +1,7 @@
 // ── AI Price Search (Gemini) ──────────────────────────────────────────────────
 
-var GEMINI_API_KEY = 'AIzaSyA_OZzZU1vzUFZzXKjWO0j-JfWN-knukAk';
+// Reference from environment — never hardcode
+var GEMINI_API_KEY = (window.ENV && window.ENV.GEMINI_API_KEY) || '';
 
 function renderPriceTracker(num) {
   document.getElementById('aiSearchResult').innerHTML = '';
