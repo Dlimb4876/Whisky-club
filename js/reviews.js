@@ -151,13 +151,19 @@ function renderReviews() {
         '</div>';
     }
 
-    // Edition lines
+    // Edition / whisky name line
     var edHtml = '';
     if (r.ed4 || r.ed5) {
-      edHtml = '<div class="review-edition-names">' +
-        (r.ed4 ? '<div class="review-ed-line"><span style="color:#8b5030">4th:</span> <strong>' + escHtml(r.ed4) + '</strong></div>' : '') +
-        (r.ed5 ? '<div class="review-ed-line"><span style="color:#8b5030">5th:</span> <strong>' + escHtml(r.ed5) + '</strong></div>' : '') +
-      '</div>';
+      edHtml = '<div class="review-edition-names">';
+      if (r.ed4 === r.ed5 || !r.ed5) {
+        var displayName = r.ed4 || r.ed5;
+        edHtml += '<div class="review-ed-line"><strong>' + escHtml(displayName) + '</strong></div>';
+      } else {
+        edHtml +=
+          (r.ed4 ? '<div class="review-ed-line"><span style="color:#8b5030">4th:</span> <strong>' + escHtml(r.ed4) + '</strong></div>' : '') +
+          (r.ed5 ? '<div class="review-ed-line"><span style="color:#8b5030">5th:</span> <strong>' + escHtml(r.ed5) + '</strong></div>' : '');
+      }
+      edHtml += '</div>';
     }
 
     // Header title (number badge + optional legacy whisky name)
