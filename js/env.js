@@ -1,3 +1,3 @@
 window.ENV = {
-  GEMINI_API_KEY: 'AIzaSyB6lbSbsH9-EX2zWXzA-BABzvSxf9Rha4o'
+  GEMINI_API_KEY: 'AIzaSyCbC8xNRVSV-Vdid2e9gmZF20Bi3qhDkcw'
 };
