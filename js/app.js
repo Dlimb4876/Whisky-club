@@ -18,10 +18,7 @@ function selectNumber() {
   const entry = entries[num];
   document.getElementById('resultNumber').textContent = '#' + num;
   document.getElementById('resultEditions').innerHTML =
-    '<div class="result-edition"><span class="ed-label">4th Edition: </span>' +
-      '<span class="ed-name">' + escHtml(entry.ed4) + '</span></div>' +
-    '<div class="result-edition"><span class="ed-label">5th Edition: </span>' +
-      '<span class="ed-name">' + escHtml(entry.ed5) + '</span></div>';
+    '<div class="result-edition"><span class="ed-name">' + escHtml(entry.ed4) + '</span></div>';
   document.getElementById('rngDisplay').innerHTML =
     'Number: <span>' + num + '</span> · drawn from <span>' + available.length + '</span> available';
 
@@ -35,17 +32,10 @@ function selectNumber() {
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Enter key to add entry ────────────────────────────────────────────────────
-
-['entryNum', 'entryEd4', 'entryEd5'].forEach(function(id) {
-  document.getElementById(id).addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') addEntry();
-  });
-});
-
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 resetRatings();
+loadDefaultEntries();
 renderEntries();
 renderReviews();
 syncPull();

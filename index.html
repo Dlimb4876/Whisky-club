@@ -15,25 +15,13 @@
 
   <div class="container">
 
-    <!-- Add entry -->
-    <div class="card">
-      <h2>Add Whisky Entry</h2>
-      <div class="entry-form">
-        <input type="number" class="ef-num" id="entryNum" placeholder="#" min="1" max="101" aria-label="Whisky entry number (1–101)" />
-        <input type="text"   class="ef-ed4" id="entryEd4" placeholder="4th Edition whisky" maxlength="80" aria-label="4th Edition whisky name" />
-        <input type="text"   class="ef-ed5" id="entryEd5" placeholder="5th Edition whisky" maxlength="80" aria-label="5th Edition whisky name" />
-        <button class="btn-add ef-add" onclick="addEntry()">Add</button>
-      </div>
-      <p class="field-hint">Number (1–101) · 4th Edition name · 5th Edition name</p>
-    </div>
-
     <!-- Entries list -->
     <div class="card">
       <div class="header-row">
         <h2>Whisky Entries</h2>
         <div style="display:flex;gap:0.5rem;align-items:center;">
           <span class="count-badge" id="entryCountBadge">0 entries</span>
-          <button class="btn-clear" onclick="clearEntries()">Clear all</button>
+          <button class="btn-clear" onclick="resetEntries()">Reset</button>
         </div>
       </div>
       <div class="entries-list" id="entriesList"></div>
