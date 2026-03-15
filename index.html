@@ -712,6 +712,81 @@
 
     .price-log-grid input,
     .price-log-grid select { width: 100%; }
+
+    /* ── AI Price Search ─────────────────────────────────────────────────── */
+    .ai-key-form {
+      display: none;
+      margin-bottom: 0.6rem;
+      padding: 0.5rem 0.6rem;
+      background: #140700;
+      border: 1px solid #3c1800;
+      border-radius: 4px;
+    }
+    .ai-key-form.visible { display: block; }
+    .ai-key-row {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+    .ai-key-row input { flex: 1; min-width: 0; }
+
+    .btn-ai-search {
+      width: 100%;
+      background: linear-gradient(135deg, #3c2800, #1a0a00);
+      border: 1px solid #c8922a;
+      color: #f8d080;
+      font-size: 0.9rem;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 0.6rem;
+      transition: background 0.15s;
+    }
+    .btn-ai-search:hover:not(:disabled) { background: linear-gradient(135deg, #5a3c00, #2a1000); }
+    .btn-ai-search:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .ai-searching {
+      color: #8b5030;
+      font-style: italic;
+      font-size: 0.85rem;
+      padding: 0.3rem 0;
+    }
+    .ai-result-card {
+      background: #1a0a00;
+      border: 1px solid #c8922a;
+      border-radius: 6px;
+      padding: 0.7rem 0.9rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .ai-price {
+      color: #f8d080;
+      font-weight: bold;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .ai-retailer { flex: 1; color: #b09070; min-width: 80px; }
+    .ai-buy-link {
+      background: #c8922a;
+      color: #1a0a00;
+      font-weight: bold;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .ai-buy-link:hover { background: #f8d080; }
+    .ai-note {
+      color: #8b5030;
+      font-size: 0.78rem;
+      width: 100%;
+      margin-top: 0.2rem;
+    }
   </style>
 </head>
 <body>
@@ -763,22 +838,18 @@
       <!-- Price Tracker -->
       <div class="price-tracker" id="priceTracker">
         <div class="price-tracker-hdr">
-          <h3>💰 Price Tracker</h3>
-          <button class="btn-icon" onclick="togglePriceLogForm()">+ Log a Price</button>
+          <h3>💰 Best Price</h3>
+          <button class="btn-icon" onclick="toggleApiKeyForm()" title="Configure Anthropic API key">⚙ API Key</button>
         </div>
-        <div class="price-search-section" id="priceSearchSection"></div>
-        <div class="price-list" id="priceList"></div>
-        <div class="price-log-form" id="priceLogForm">
-          <div class="price-log-grid">
-            <select id="plPerson" aria-label="Your name">
-              <option>Kev</option><option>John</option><option>Dan</option><option>Morgan</option>
-            </select>
-            <input type="text"   id="plRetailer" placeholder="Retailer" maxlength="60" aria-label="Retailer name" />
-            <input type="number" id="plPrice"    placeholder="£ price" min="0" step="0.01" aria-label="Price in pounds" />
-            <button class="btn-add pl-save" onclick="logPrice()">Save</button>
+        <div class="ai-key-form" id="aiKeyForm">
+          <div class="ai-key-row">
+            <input type="password" id="aiApiKey" placeholder="Anthropic API key (sk-ant-…)" maxlength="200" aria-label="Anthropic API key" />
+            <button class="btn-add" onclick="saveApiKey()">Save</button>
           </div>
-          <input type="text" id="plUrl" placeholder="URL (optional)" maxlength="400" aria-label="Product URL" style="width:100%;margin-top:0;" />
+          <p class="field-hint">Stored locally in your browser only. Get a key at console.anthropic.com</p>
         </div>
+        <button class="btn-ai-search" id="btnAiSearch" onclick="searchWhiskyPriceWithAI()">🤖 Find Best Price</button>
+        <div id="aiSearchResult"></div>
       </div>
 
       <button class="btn-secondary" onclick="toggleReviewForm()" style="margin-top:1rem;">✍️ Add Tasting Notes</button>
@@ -834,12 +905,6 @@
     const JSONBIN_BIN  = '69b6b0bbb7ec241ddc6e2ca0';
 
     const PERSONS = ['Kev', 'John', 'Dan', 'Morgan'];
-
-    const RETAILERS = [
-      { name: 'TWE',    url: 'https://www.thewhiskyexchange.com/search?q=' },
-      { name: 'MoM',    url: 'https://www.masterofmalt.com/search/?q=' },
-      { name: 'Amazon', url: 'https://www.amazon.co.uk/s?k=' }
-    ];
 
     let entries  = JSON.parse(localStorage.getItem(ENTRIES_KEY)  || '{}');
     let usedNums = JSON.parse(localStorage.getItem(USED_KEY)     || '[]');
@@ -1294,125 +1359,114 @@
       }
     }
 
-    // ── Price Tracker ─────────────────────────────────────────────────────────
+    // ── AI Price Search ───────────────────────────────────────────────────────
 
     function renderPriceTracker(num) {
-      var entry = entries[num] || {};
-
-      // Build search-links section
-      var searchSection = document.getElementById('priceSearchSection');
-      searchSection.innerHTML = '';
-      var names = [];
-      if (entry.ed4) names.push({ label: '4th: ' + entry.ed4, q: entry.ed4 });
-      if (entry.ed5) names.push({ label: '5th: ' + entry.ed5, q: entry.ed5 });
-
-      names.forEach(function(item) {
-        var row = document.createElement('div');
-        row.className = 'price-search-row';
-        var lbl = document.createElement('span');
-        lbl.className   = 'price-search-label';
-        lbl.textContent = item.label + ':';
-        row.appendChild(lbl);
-        RETAILERS.forEach(function(r) {
-          var a = document.createElement('a');
-          a.className    = 'btn-retailer';
-          a.href         = r.url + encodeURIComponent(item.q);
-          a.target       = '_blank';
-          a.rel          = 'noopener noreferrer';
-          a.textContent  = r.name;
-          row.appendChild(a);
-        });
-        searchSection.appendChild(row);
-      });
-
-      // Show logged prices for this whisky, cheapest first
-      var withIdx = prices.map(function(p, i) { return { p: p, i: i }; });
-      var whiskyPrices = withIdx
-        .filter(function(x) { return x.p.whiskyNum === num; })
-        .sort(function(a, b) { return a.p.price - b.p.price; });
-
-      var priceList = document.getElementById('priceList');
-      priceList.innerHTML = '';
-
-      if (whiskyPrices.length === 0) {
-        priceList.innerHTML = '<p class="no-prices">No prices logged yet — be the first!</p>';
-      } else {
-        whiskyPrices.forEach(function(x, rank) {
-          var p   = x.p;
-          var idx = x.i;
-          var div = document.createElement('div');
-          div.className = 'price-item' + (rank === 0 ? ' cheapest' : '');
-
-          var retailerHtml = (p.url && /^https?:\/\//.test(p.url))
-            ? '<a href="' + escHtml(p.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(p.retailer) + '</a>'
-            : escHtml(p.retailer);
-
-          div.innerHTML =
-            '<span class="price-amount">£' + p.price.toFixed(2) + '</span>' +
-            '<span class="price-retailer">' + retailerHtml + '</span>' +
-            (rank === 0 ? '<span class="price-cheapest-badge">cheapest</span>' : '') +
-            '<span class="price-by">by ' + escHtml(p.loggedBy) + ' · ' + escHtml(p.date) + '</span>' +
-            '<button class="btn-delete-review" onclick="deletePrice(' + idx + ')" title="Remove">✕</button>';
-
-          priceList.appendChild(div);
-        });
-      }
-
-      // Reset log form
-      document.getElementById('priceLogForm').classList.remove('visible');
+      document.getElementById('aiSearchResult').innerHTML = '';
+      document.getElementById('aiKeyForm').classList.remove('visible');
     }
 
-    function togglePriceLogForm() {
-      var form = document.getElementById('priceLogForm');
+    function toggleApiKeyForm() {
+      var form = document.getElementById('aiKeyForm');
       form.classList.toggle('visible');
       if (form.classList.contains('visible')) {
-        document.getElementById('plRetailer').focus();
+        document.getElementById('aiApiKey').value = localStorage.getItem('anthropic-api-key') || '';
+        document.getElementById('aiApiKey').focus();
       }
     }
 
-    async function logPrice() {
-      if (currentNum === null) return;
-      var retailer = document.getElementById('plRetailer').value.trim();
-      var priceVal = parseFloat(document.getElementById('plPrice').value);
-      var url      = document.getElementById('plUrl').value.trim();
-      var person   = document.getElementById('plPerson').value;
-
-      if (!retailer) { flash(document.getElementById('plRetailer')); return; }
-      if (isNaN(priceVal) || priceVal <= 0) { flash(document.getElementById('plPrice')); return; }
-      if (url && !/^https?:\/\//.test(url)) { flash(document.getElementById('plUrl')); return; }
-
-      var entry = entries[currentNum] || { ed4: '', ed5: '' };
-      var now   = new Date();
-      var date  = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-      prices.push({
-        whiskyNum: currentNum,
-        ed4:       entry.ed4,
-        ed5:       entry.ed5,
-        price:     parseFloat(priceVal.toFixed(2)),
-        retailer:  retailer,
-        url:       url,
-        loggedBy:  person,
-        date:      date,
-        timestamp: now.getTime()
-      });
-
-      savePricesLocal();
-      renderPriceTracker(currentNum);
-
-      document.getElementById('plRetailer').value = '';
-      document.getElementById('plPrice').value    = '';
-      document.getElementById('plUrl').value      = '';
-
-      await syncPush();
+    function saveApiKey() {
+      var key = document.getElementById('aiApiKey').value.trim();
+      if (key) {
+        localStorage.setItem('anthropic-api-key', key);
+      } else {
+        localStorage.removeItem('anthropic-api-key');
+      }
+      document.getElementById('aiKeyForm').classList.remove('visible');
     }
 
-    async function deletePrice(index) {
-      if (!confirm('Remove this price entry?')) return;
-      prices.splice(index, 1);
-      savePricesLocal();
-      renderPriceTracker(currentNum);
-      await syncPush();
+    async function searchWhiskyPriceWithAI() {
+      if (currentNum === null) return;
+      var entry = entries[currentNum] || {};
+      var whiskyName = entry.ed4 || entry.ed5 || '';
+      if (!whiskyName) {
+        document.getElementById('aiSearchResult').innerHTML =
+          '<p class="no-prices">No whisky name found for this entry.</p>';
+        return;
+      }
+
+      var apiKey = localStorage.getItem('anthropic-api-key') || '';
+      if (!apiKey) {
+        document.getElementById('aiKeyForm').classList.add('visible');
+        document.getElementById('aiApiKey').focus();
+        return;
+      }
+
+      var resultEl = document.getElementById('aiSearchResult');
+      var btn      = document.getElementById('btnAiSearch');
+      resultEl.innerHTML = '<p class="ai-searching">🔍 Searching for the best UK price…</p>';
+      btn.disabled = true;
+
+      try {
+        var resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type':    'application/json',
+            'x-api-key':       apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model:      'claude-opus-4-6',
+            max_tokens: 1024,
+            tools: [{ type: 'web_search_20260209', name: 'web_search' }],
+            system: 'You are a helpful assistant that finds the best current UK prices for whisky. Search for up-to-date prices and always provide a direct purchase link.',
+            messages: [{
+              role: 'user',
+              content: 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]'
+            }]
+          })
+        });
+
+        if (!resp.ok) {
+          var errBody = await resp.json().catch(function() { return {}; });
+          var errMsg  = (errBody.error && errBody.error.message) ? errBody.error.message : 'API error ' + resp.status;
+          if (resp.status === 401) errMsg = 'Invalid API key — update it via ⚙ API Key.';
+          throw new Error(errMsg);
+        }
+
+        var data       = await resp.json();
+        var textBlocks = (data.content || []).filter(function(b) { return b.type === 'text'; });
+        if (textBlocks.length === 0) throw new Error('No text response received from AI.');
+
+        var text        = textBlocks[textBlocks.length - 1].text;
+        var resultMatch = text.match(/RESULT:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(https?:\/\/\S+)/i);
+
+        if (resultMatch) {
+          var price    = resultMatch[1].trim();
+          var retailer = resultMatch[2].trim();
+          var url      = resultMatch[3].replace(/[.,)>]+$/, '').trim();
+          resultEl.innerHTML =
+            '<div class="ai-result-card">' +
+            '<span class="ai-price">'    + escHtml(price)    + '</span>' +
+            '<span class="ai-retailer">' + escHtml(retailer) + '</span>' +
+            '<a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ai-buy-link">Buy Now →</a>' +
+            '</div>';
+        } else {
+          // Fallback: extract any price + URL from text
+          var priceMatch = text.match(/£[\d,]+\.?\d*/);
+          var urlMatch   = text.match(/https?:\/\/[^\s<>"')]+/);
+          resultEl.innerHTML =
+            '<div class="ai-result-card">' +
+            (priceMatch ? '<span class="ai-price">' + escHtml(priceMatch[0]) + '</span>' : '') +
+            (urlMatch   ? '<a href="' + escHtml(urlMatch[0].replace(/[.,)>]+$/, '')) + '" target="_blank" rel="noopener noreferrer" class="ai-buy-link">Buy Now →</a>' : '') +
+            '<span class="ai-note">' + escHtml(text.slice(0, 300)) + '</span>' +
+            '</div>';
+        }
+      } catch (err) {
+        resultEl.innerHTML = '<p class="no-prices">Error: ' + escHtml(err.message || 'Unknown error') + '</p>';
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
