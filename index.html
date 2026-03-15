@@ -714,37 +714,6 @@
     .price-log-grid select { width: 100%; }
 
     /* ── AI Price Search ─────────────────────────────────────────────────── */
-    .ai-key-form {
-      display: none;
-      margin-bottom: 0.6rem;
-      padding: 0.5rem 0.6rem;
-      background: #140700;
-      border: 1px solid #3c1800;
-      border-radius: 4px;
-    }
-    .ai-key-form.visible { display: block; }
-    .ai-key-row {
-      display: flex;
-      gap: 0.4rem;
-      align-items: center;
-      margin-bottom: 0.3rem;
-    }
-    .ai-key-row input { flex: 1; min-width: 0; }
-
-    .btn-ai-search {
-      width: 100%;
-      background: linear-gradient(135deg, #3c2800, #1a0a00);
-      border: 1px solid #c8922a;
-      color: #f8d080;
-      font-size: 0.9rem;
-      padding: 0.55rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-bottom: 0.6rem;
-      transition: background 0.15s;
-    }
-    .btn-ai-search:hover:not(:disabled) { background: linear-gradient(135deg, #5a3c00, #2a1000); }
-    .btn-ai-search:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .ai-searching {
       color: #8b5030;
@@ -839,16 +808,7 @@
       <div class="price-tracker" id="priceTracker">
         <div class="price-tracker-hdr">
           <h3>💰 Best Price</h3>
-          <button class="btn-icon" onclick="toggleApiKeyForm()" title="Configure Anthropic API key">⚙ API Key</button>
         </div>
-        <div class="ai-key-form" id="aiKeyForm">
-          <div class="ai-key-row">
-            <input type="password" id="aiApiKey" placeholder="Anthropic API key (sk-ant-…)" maxlength="200" aria-label="Anthropic API key" />
-            <button class="btn-add" onclick="saveApiKey()">Save</button>
-          </div>
-          <p class="field-hint">Stored locally in your browser only. Get a key at console.anthropic.com</p>
-        </div>
-        <button class="btn-ai-search" id="btnAiSearch" onclick="searchWhiskyPriceWithAI()">🤖 Find Best Price</button>
         <div id="aiSearchResult"></div>
       </div>
 
@@ -1361,28 +1321,11 @@
 
     // ── AI Price Search ───────────────────────────────────────────────────────
 
+    var GEMINI_API_KEY = 'AIzaSyA_OZzZU1vzUFZzXKjWO0j-JfWN-knukAk';
+
     function renderPriceTracker(num) {
       document.getElementById('aiSearchResult').innerHTML = '';
-      document.getElementById('aiKeyForm').classList.remove('visible');
-    }
-
-    function toggleApiKeyForm() {
-      var form = document.getElementById('aiKeyForm');
-      form.classList.toggle('visible');
-      if (form.classList.contains('visible')) {
-        document.getElementById('aiApiKey').value = localStorage.getItem('anthropic-api-key') || '';
-        document.getElementById('aiApiKey').focus();
-      }
-    }
-
-    function saveApiKey() {
-      var key = document.getElementById('aiApiKey').value.trim();
-      if (key) {
-        localStorage.setItem('anthropic-api-key', key);
-      } else {
-        localStorage.removeItem('anthropic-api-key');
-      }
-      document.getElementById('aiKeyForm').classList.remove('visible');
+      searchWhiskyPriceWithAI();
     }
 
     async function searchWhiskyPriceWithAI() {
@@ -1395,50 +1338,41 @@
         return;
       }
 
-      var apiKey = localStorage.getItem('anthropic-api-key') || '';
-      if (!apiKey) {
-        document.getElementById('aiKeyForm').classList.add('visible');
-        document.getElementById('aiApiKey').focus();
-        return;
-      }
-
       var resultEl = document.getElementById('aiSearchResult');
-      var btn      = document.getElementById('btnAiSearch');
       resultEl.innerHTML = '<p class="ai-searching">🔍 Searching for the best UK price…</p>';
-      btn.disabled = true;
 
       try {
-        var resp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type':    'application/json',
-            'x-api-key':       apiKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model:      'claude-opus-4-6',
-            max_tokens: 1024,
-            tools: [{ type: 'web_search_20260209', name: 'web_search' }],
-            system: 'You are a helpful assistant that finds the best current UK prices for whisky. Search for up-to-date prices and always provide a direct purchase link.',
-            messages: [{
-              role: 'user',
-              content: 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]'
-            }]
-          })
-        });
+        var resp = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+            body: JSON.stringify({
+              contents: [{
+                role: 'user',
+                parts: [{
+                  text: 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]'
+                }]
+              }],
+              tools: [{ google_search: {} }],
+              generationConfig: { maxOutputTokens: 1024 }
+            })
+          }
+        );
 
         if (!resp.ok) {
           var errBody = await resp.json().catch(function() { return {}; });
           var errMsg  = (errBody.error && errBody.error.message) ? errBody.error.message : 'API error ' + resp.status;
-          if (resp.status === 401) errMsg = 'Invalid API key — update it via ⚙ API Key.';
           throw new Error(errMsg);
         }
 
-        var data       = await resp.json();
-        var textBlocks = (data.content || []).filter(function(b) { return b.type === 'text'; });
-        if (textBlocks.length === 0) throw new Error('No text response received from AI.');
+        var data      = await resp.json();
+        var candidate = (data.candidates || [])[0];
+        var parts     = (candidate && candidate.content && candidate.content.parts) || [];
+        var textParts = parts.filter(function(p) { return p.text; });
+        if (textParts.length === 0) throw new Error('No text response received from AI.');
 
-        var text        = textBlocks[textBlocks.length - 1].text;
+        var text        = textParts[textParts.length - 1].text;
         var resultMatch = text.match(/RESULT:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(https?:\/\/\S+)/i);
 
         if (resultMatch) {
@@ -1464,8 +1398,6 @@
         }
       } catch (err) {
         resultEl.innerHTML = '<p class="no-prices">Error: ' + escHtml(err.message || 'Unknown error') + '</p>';
-      } finally {
-        btn.disabled = false;
       }
     }
 
