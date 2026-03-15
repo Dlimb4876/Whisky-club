@@ -8,5 +8,5 @@
 // via a global window.ENV object loaded before the app scripts.
 
 window.ENV = {
-  GEMINI_API_KEY: 'YOUR_GEMINI_API_KEY_HERE'
+  GEMINI_API_KEY: 'AIzaSyB6lbSbsH9-EX2zWXzA-BABzvSxf9Rha4o'
 };
