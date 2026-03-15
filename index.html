@@ -882,6 +882,7 @@
       ed5Input.value = '';
       saveEntries();
       renderEntries();
+      syncPush();
     }
 
     function removeEntry(num) {
@@ -894,6 +895,7 @@
       saveEntries();
       saveUsed();
       renderEntries();
+      syncPush();
     }
 
     function clearEntries() {
@@ -906,6 +908,7 @@
       saveEntries();
       saveUsed();
       renderEntries();
+      syncPush();
     }
 
     function renderEntries() {
@@ -959,6 +962,7 @@
       if (!usedNums.includes(num)) {
         usedNums.push(num);
         saveUsed();
+        syncPush();
       }
 
       const entry = entries[num];
@@ -1255,10 +1259,15 @@
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        reviews = Array.isArray(data.record.reviews) ? data.record.reviews : [];
-        prices  = Array.isArray(data.record.prices)  ? data.record.prices  : [];
+        reviews  = Array.isArray(data.record.reviews)  ? data.record.reviews  : [];
+        prices   = Array.isArray(data.record.prices)   ? data.record.prices   : [];
+        if (data.record.entries  && typeof data.record.entries  === 'object') entries  = data.record.entries;
+        if (Array.isArray(data.record.usedNums)) usedNums = data.record.usedNums;
         saveReviewsLocal();
         savePricesLocal();
+        saveEntries();
+        saveUsed();
+        renderEntries();
         renderReviews();
         if (currentNum !== null) renderPriceTracker(currentNum);
         setSyncStatus('ok', '✓ Synced');
@@ -1276,7 +1285,7 @@
             'Content-Type': 'application/json',
             'X-Master-Key': JSONBIN_KEY
           },
-          body: JSON.stringify({ reviews: reviews, prices: prices })
+          body: JSON.stringify({ reviews: reviews, prices: prices, entries: entries, usedNums: usedNums })
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         setSyncStatus('ok', '✓ Synced');
