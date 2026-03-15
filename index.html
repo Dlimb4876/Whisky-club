@@ -578,6 +578,140 @@
       font-size: 0.8rem;
       text-align: center;
     }
+
+    /* ── Price Tracker ───────────────────────────────────────────────────────── */
+
+    .price-tracker {
+      margin-top: 1rem;
+      border-top: 1px solid #5a3010;
+      padding-top: 1rem;
+      text-align: left;
+    }
+
+    .price-tracker-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.7rem;
+    }
+
+    .price-tracker-hdr h3 {
+      color: #c8922a;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .price-search-section {
+      margin-bottom: 0.8rem;
+    }
+
+    .price-search-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .price-search-label {
+      color: #8b5030;
+      font-size: 0.78rem;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .btn-retailer {
+      background: #1a0a00;
+      border: 1px solid #5a3010;
+      color: #b09070;
+      font-size: 0.78rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-retailer:hover { border-color: #c8922a; color: #f8d080; }
+
+    .price-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .price-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #1a0a00;
+      border: 1px solid #3c1800;
+      border-radius: 4px;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .price-item.cheapest { border-color: #c8922a; }
+
+    .price-amount {
+      color: #f8d080;
+      font-weight: bold;
+      font-size: 0.95rem;
+      min-width: 55px;
+      flex-shrink: 0;
+    }
+
+    .price-retailer { flex: 1; color: #b09070; min-width: 80px; }
+    .price-retailer a { color: #b09070; text-decoration: underline; }
+    .price-retailer a:hover { color: #c8922a; }
+
+    .price-by { color: #5a3010; font-size: 0.78rem; flex-shrink: 0; }
+
+    .price-cheapest-badge {
+      font-size: 0.7rem;
+      background: #3c2800;
+      color: #c8922a;
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .no-prices {
+      color: #5a3010;
+      font-style: italic;
+      font-size: 0.85rem;
+      padding: 0.2rem 0;
+    }
+
+    .price-log-form {
+      display: none;
+      margin-top: 0.5rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #3c1800;
+    }
+
+    .price-log-form.visible { display: block; }
+
+    .price-log-grid {
+      display: grid;
+      grid-template-columns: 95px 1fr 90px auto;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+
+    @media (max-width: 540px) {
+      .price-log-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .price-log-grid .pl-save { grid-column: 1 / span 2; }
+    }
+
+    .price-log-grid input,
+    .price-log-grid select { width: 100%; }
   </style>
 </head>
 <body>
@@ -625,7 +759,29 @@
       <div class="result-sub">Sláinte! 🥃</div>
       <div class="result-editions" id="resultEditions"></div>
       <div class="rng-display" id="rngDisplay"></div>
-      <button class="btn-secondary" onclick="toggleReviewForm()">✍️ Add Tasting Notes</button>
+
+      <!-- Price Tracker -->
+      <div class="price-tracker" id="priceTracker">
+        <div class="price-tracker-hdr">
+          <h3>💰 Price Tracker</h3>
+          <button class="btn-icon" onclick="togglePriceLogForm()">+ Log a Price</button>
+        </div>
+        <div class="price-search-section" id="priceSearchSection"></div>
+        <div class="price-list" id="priceList"></div>
+        <div class="price-log-form" id="priceLogForm">
+          <div class="price-log-grid">
+            <select id="plPerson" aria-label="Your name">
+              <option>Kev</option><option>John</option><option>Dan</option><option>Morgan</option>
+            </select>
+            <input type="text"   id="plRetailer" placeholder="Retailer" maxlength="60" aria-label="Retailer name" />
+            <input type="number" id="plPrice"    placeholder="£ price" min="0" step="0.01" aria-label="Price in pounds" />
+            <button class="btn-add pl-save" onclick="logPrice()">Save</button>
+          </div>
+          <input type="text" id="plUrl" placeholder="URL (optional)" maxlength="400" aria-label="Product URL" style="width:100%;margin-top:0;" />
+        </div>
+      </div>
+
+      <button class="btn-secondary" onclick="toggleReviewForm()" style="margin-top:1rem;">✍️ Add Tasting Notes</button>
 
       <div class="review-form" id="reviewForm">
         <h3>Rate &amp; Review</h3>
@@ -672,15 +828,23 @@
     const ENTRIES_KEY  = 'whisky-club-entries';
     const USED_KEY     = 'whisky-club-used';
     const REVIEWS_KEY  = 'whisky-club-reviews';
+    const PRICES_KEY   = 'whisky-club-prices';
     const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
     const JSONBIN_KEY  = '$2a$10$7sndeshKqvuoqFr.LDI8eOHtIomBtO83.wPskt3Y33i0NfNekDisC';
     const JSONBIN_BIN  = '69b6b0bbb7ec241ddc6e2ca0';
 
     const PERSONS = ['Kev', 'John', 'Dan', 'Morgan'];
 
+    const RETAILERS = [
+      { name: 'TWE',    url: 'https://www.thewhiskyexchange.com/search?q=' },
+      { name: 'MoM',    url: 'https://www.masterofmalt.com/search/?q=' },
+      { name: 'Amazon', url: 'https://www.amazon.co.uk/s?k=' }
+    ];
+
     let entries  = JSON.parse(localStorage.getItem(ENTRIES_KEY)  || '{}');
     let usedNums = JSON.parse(localStorage.getItem(USED_KEY)     || '[]');
     let reviews  = JSON.parse(localStorage.getItem(REVIEWS_KEY)  || '[]');
+    let prices   = JSON.parse(localStorage.getItem(PRICES_KEY)   || '[]');
 
     let currentNum     = null;
     let currentRatings = {};
@@ -696,6 +860,7 @@
     function saveEntries()      { localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); }
     function saveUsed()         { localStorage.setItem(USED_KEY,    JSON.stringify(usedNums)); }
     function saveReviewsLocal() { localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews)); }
+    function savePricesLocal()  { localStorage.setItem(PRICES_KEY,  JSON.stringify(prices)); }
 
     // ── Entries management ────────────────────────────────────────────────────
 
@@ -811,6 +976,7 @@
       buildPersonRatingRows();
       document.getElementById('reviewNotes').value = '';
       document.getElementById('reviewForm').classList.remove('visible');
+      renderPriceTracker(num);
       renderEntries();
       document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -1090,8 +1256,11 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         reviews = Array.isArray(data.record.reviews) ? data.record.reviews : [];
+        prices  = Array.isArray(data.record.prices)  ? data.record.prices  : [];
         saveReviewsLocal();
+        savePricesLocal();
         renderReviews();
+        if (currentNum !== null) renderPriceTracker(currentNum);
         setSyncStatus('ok', '✓ Synced');
       } catch (e) {
         setSyncStatus('err', '✗ Sync error');
@@ -1107,13 +1276,134 @@
             'Content-Type': 'application/json',
             'X-Master-Key': JSONBIN_KEY
           },
-          body: JSON.stringify({ reviews: reviews })
+          body: JSON.stringify({ reviews: reviews, prices: prices })
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         setSyncStatus('ok', '✓ Synced');
       } catch (e) {
         setSyncStatus('err', '✗ Sync error');
       }
+    }
+
+    // ── Price Tracker ─────────────────────────────────────────────────────────
+
+    function renderPriceTracker(num) {
+      var entry = entries[num] || {};
+
+      // Build search-links section
+      var searchSection = document.getElementById('priceSearchSection');
+      searchSection.innerHTML = '';
+      var names = [];
+      if (entry.ed4) names.push({ label: '4th: ' + entry.ed4, q: entry.ed4 });
+      if (entry.ed5) names.push({ label: '5th: ' + entry.ed5, q: entry.ed5 });
+
+      names.forEach(function(item) {
+        var row = document.createElement('div');
+        row.className = 'price-search-row';
+        var lbl = document.createElement('span');
+        lbl.className   = 'price-search-label';
+        lbl.textContent = item.label + ':';
+        row.appendChild(lbl);
+        RETAILERS.forEach(function(r) {
+          var a = document.createElement('a');
+          a.className    = 'btn-retailer';
+          a.href         = r.url + encodeURIComponent(item.q);
+          a.target       = '_blank';
+          a.rel          = 'noopener noreferrer';
+          a.textContent  = r.name;
+          row.appendChild(a);
+        });
+        searchSection.appendChild(row);
+      });
+
+      // Show logged prices for this whisky, cheapest first
+      var withIdx = prices.map(function(p, i) { return { p: p, i: i }; });
+      var whiskyPrices = withIdx
+        .filter(function(x) { return x.p.whiskyNum === num; })
+        .sort(function(a, b) { return a.p.price - b.p.price; });
+
+      var priceList = document.getElementById('priceList');
+      priceList.innerHTML = '';
+
+      if (whiskyPrices.length === 0) {
+        priceList.innerHTML = '<p class="no-prices">No prices logged yet — be the first!</p>';
+      } else {
+        whiskyPrices.forEach(function(x, rank) {
+          var p   = x.p;
+          var idx = x.i;
+          var div = document.createElement('div');
+          div.className = 'price-item' + (rank === 0 ? ' cheapest' : '');
+
+          var retailerHtml = (p.url && /^https?:\/\//.test(p.url))
+            ? '<a href="' + escHtml(p.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(p.retailer) + '</a>'
+            : escHtml(p.retailer);
+
+          div.innerHTML =
+            '<span class="price-amount">£' + p.price.toFixed(2) + '</span>' +
+            '<span class="price-retailer">' + retailerHtml + '</span>' +
+            (rank === 0 ? '<span class="price-cheapest-badge">cheapest</span>' : '') +
+            '<span class="price-by">by ' + escHtml(p.loggedBy) + ' · ' + escHtml(p.date) + '</span>' +
+            '<button class="btn-delete-review" onclick="deletePrice(' + idx + ')" title="Remove">✕</button>';
+
+          priceList.appendChild(div);
+        });
+      }
+
+      // Reset log form
+      document.getElementById('priceLogForm').classList.remove('visible');
+    }
+
+    function togglePriceLogForm() {
+      var form = document.getElementById('priceLogForm');
+      form.classList.toggle('visible');
+      if (form.classList.contains('visible')) {
+        document.getElementById('plRetailer').focus();
+      }
+    }
+
+    async function logPrice() {
+      if (currentNum === null) return;
+      var retailer = document.getElementById('plRetailer').value.trim();
+      var priceVal = parseFloat(document.getElementById('plPrice').value);
+      var url      = document.getElementById('plUrl').value.trim();
+      var person   = document.getElementById('plPerson').value;
+
+      if (!retailer) { flash(document.getElementById('plRetailer')); return; }
+      if (isNaN(priceVal) || priceVal <= 0) { flash(document.getElementById('plPrice')); return; }
+      if (url && !/^https?:\/\//.test(url)) { flash(document.getElementById('plUrl')); return; }
+
+      var entry = entries[currentNum] || { ed4: '', ed5: '' };
+      var now   = new Date();
+      var date  = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      prices.push({
+        whiskyNum: currentNum,
+        ed4:       entry.ed4,
+        ed5:       entry.ed5,
+        price:     parseFloat(priceVal.toFixed(2)),
+        retailer:  retailer,
+        url:       url,
+        loggedBy:  person,
+        date:      date,
+        timestamp: now.getTime()
+      });
+
+      savePricesLocal();
+      renderPriceTracker(currentNum);
+
+      document.getElementById('plRetailer').value = '';
+      document.getElementById('plPrice').value    = '';
+      document.getElementById('plUrl').value      = '';
+
+      await syncPush();
+    }
+
+    async function deletePrice(index) {
+      if (!confirm('Remove this price entry?')) return;
+      prices.splice(index, 1);
+      savePricesLocal();
+      renderPriceTracker(currentNum);
+      await syncPush();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
