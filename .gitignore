@@ -1,0 +1,2 @@
+# Local environment — contains real API keys, never commit
+js/env.js
