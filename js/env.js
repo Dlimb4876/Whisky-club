@@ -1,3 +1,4 @@
+// API endpoint — automatically uses current domain
 window.ENV = {
-  API_BASE_URL: process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api'
+  API_BASE_URL: '/api'
 };

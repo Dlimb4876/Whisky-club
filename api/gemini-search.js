@@ -1,30 +1,28 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+  // Handle OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('.'));
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-if (!GEMINI_API_KEY) {
-  console.warn('Warning: GEMINI_API_KEY not set in environment variables');
-}
-
-// Proxy endpoint for Gemini API
-app.post('/api/gemini-search', async (req, res) => {
   const { prompt } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'prompt is required' });
   }
 
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
   if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY not configured in environment');
     return res.status(500).json({ error: 'API key not configured' });
   }
 
@@ -56,13 +54,9 @@ app.post('/api/gemini-search', async (req, res) => {
     }
 
     const data = await response.json();
-    res.json(data);
+    return res.status(200).json(data);
   } catch (err) {
     console.error('Server error:', err.message);
-    res.status(500).json({ error: err.message || 'Unknown error' });
+    return res.status(500).json({ error: err.message || 'Unknown error' });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`Whisky Club server running on http://localhost:${PORT}`);
-});
+}
