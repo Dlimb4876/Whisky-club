@@ -1,7 +1,7 @@
-// ── AI Price Search (Gemini) ──────────────────────────────────────────────────
+// ── AI Price Search (Gemini via Backend Proxy) ──────────────────────────────────────────────
 
-// Reference from environment — never hardcode
-var GEMINI_API_KEY = (window.ENV && window.ENV.GEMINI_API_KEY) || '';
+// API endpoint (configured in env.js)
+var API_BASE_URL = (window.ENV && window.ENV.API_BASE_URL) || '/api';
 
 function renderPriceTracker(num) {
   document.getElementById('aiSearchResult').innerHTML = '';
@@ -22,27 +22,20 @@ async function searchWhiskyPriceWithAI() {
   resultEl.innerHTML = '<p class="ai-searching">🔍 Searching for the best UK price…</p>';
 
   try {
+    var prompt = 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]';
+
     var resp = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+      API_BASE_URL + '/gemini-search',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{
-            role: 'user',
-            parts: [{
-              text: 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]'
-            }]
-          }],
-          tools: [{ google_search: {} }],
-          generationConfig: { maxOutputTokens: 1024 }
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt })
       }
     );
 
     if (!resp.ok) {
       var errBody = await resp.json().catch(function() { return {}; });
-      var errMsg  = (errBody.error && errBody.error.message) ? errBody.error.message : 'API error ' + resp.status;
+      var errMsg  = (errBody.error) ? errBody.error : 'API error ' + resp.status;
       throw new Error(errMsg);
     }
 

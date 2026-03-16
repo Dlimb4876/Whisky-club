@@ -1,3 +1,4 @@
+// API endpoint — automatically uses current domain
 window.ENV = {
-  GEMINI_API_KEY: 'AIzaSyCbC8xNRVSV-Vdid2e9gmZF20Bi3qhDkcw'
+  API_BASE_URL: '/api'
 };

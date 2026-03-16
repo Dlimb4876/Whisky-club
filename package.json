@@ -1,0 +1,14 @@
+{
+  "name": "whisky-club",
+  "version": "1.0.0",
+  "description": "Whisky Club Selector with AI-powered price search",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel",
+    "build": "npm install"
+  },
+  "devDependencies": {
+    "vercel": "^latest"
+  }
+}
