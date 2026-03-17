@@ -128,4 +128,4 @@ let currentNum1    = null; // slot 1 selected number
 let currentNum2    = null; // slot 2 selected number
 let activeSlot     = null; // which slot's review form is open (1 or 2)
 let currentRatings = {};
-let rollsLocked    = true; // roll buttons locked until "Roll Next Session" is clicked
+let rollsLocked    = false; // roll buttons unlocked by default
