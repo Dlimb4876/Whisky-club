@@ -118,8 +118,8 @@ const JSONBIN_BIN  = '69b6b0bbb7ec241ddc6e2ca0';
 const PERSONS = ['Kev', 'John', 'Dan', 'Morgan'];
 
 // ── App state ─────────────────────────────────────────────────────────────────
-let entries  = {};
-let usedNums = [];
+let entries  = JSON.parse(localStorage.getItem(ENTRIES_KEY)  || '{}');
+let usedNums = JSON.parse(localStorage.getItem(USED_KEY)     || '[]');
 let reviews  = JSON.parse(localStorage.getItem(REVIEWS_KEY)  || '[]');
 let prices   = JSON.parse(localStorage.getItem(PRICES_KEY)   || '[]');
 
