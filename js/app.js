@@ -89,6 +89,31 @@ function selectNumber(slot) {
   renderWhiskyList();
 }
 
+// ── Clear a slot selection ────────────────────────────────────────────────────
+
+function clearSlot(slot) {
+  var num = (slot === 1) ? currentNum1 : currentNum2;
+  if (num === null) return;
+
+  // Remove from used so it goes back into the available pool
+  usedNums = usedNums.filter(function(n) { return n !== num; });
+  saveUsed();
+  syncPush();
+
+  if (slot === 1) currentNum1 = null;
+  else currentNum2 = null;
+
+  // Hide the result card
+  var resultCard = document.getElementById('slotResult' + slot);
+  resultCard.classList.remove('visible');
+
+  // Close review form if it was open for this slot
+  if (activeSlot === slot) closeReviewForm();
+
+  saveSession();
+  renderWhiskyList();
+}
+
 // ── Restore last session ──────────────────────────────────────────────────────
 
 function restoreSession() {
