@@ -809,7 +809,7 @@ footer {
 
 .whisky-list-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   background: #1a0a00;
   border: 1px solid #3c1800;
@@ -838,10 +838,16 @@ footer {
   flex-shrink: 0;
 }
 
-.wl-name {
+.wl-name-block {
   flex: 1;
-  color: #f0e6d3;
   min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.wl-name {
+  color: #f0e6d3;
 }
 
 .whisky-list-item.tasted .wl-name {
@@ -1137,4 +1143,50 @@ footer {
   font-size: 0.78rem;
   width: 100%;
   margin-top: 0.2rem;
+}
+
+/* ── Whisky Info Panel ────────────────────────────────────────────────────── */
+
+.whisky-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.whisky-info-region {
+  font-size: 0.8rem;
+  color: #c8922a;
+  font-style: italic;
+}
+
+.whisky-info-desc {
+  font-size: 0.88rem;
+  color: #d4c4a8;
+  line-height: 1.5;
+}
+
+.whisky-info-price {
+  font-size: 0.85rem;
+  color: #b09070;
+}
+
+.whisky-price-val {
+  color: #f8d080;
+  font-weight: bold;
+}
+
+/* ── Whisky list region + description ───────────────────────────────────────── */
+
+.wl-region {
+  font-size: 0.75rem;
+  color: #c8922a;
+  font-style: italic;
+  margin-top: 0.1rem;
+}
+
+.wl-desc {
+  font-size: 0.78rem;
+  color: #a08060;
+  line-height: 1.4;
+  margin-top: 0.15rem;
 }
