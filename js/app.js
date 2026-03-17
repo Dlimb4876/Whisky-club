@@ -11,9 +11,31 @@ function showPage(name) {
   if (name === 'reviews') renderReviews();
 }
 
+// ── Roll lock / unlock ────────────────────────────────────────────────────────
+
+function updateRollLockUI() {
+  var btn1 = document.getElementById('generateBtn1');
+  var btn2 = document.getElementById('generateBtn2');
+  var rollBtn = document.getElementById('rollNextSessionBtn');
+  if (btn1) btn1.disabled = rollsLocked;
+  if (btn2) btn2.disabled = rollsLocked;
+  if (rollBtn) {
+    rollBtn.textContent = rollsLocked ? '🎲 Roll Next Session' : '🔒 Lock Session';
+    rollBtn.classList.toggle('locked', rollsLocked);
+  }
+}
+
+function rollNextSession() {
+  rollsLocked = !rollsLocked;
+  saveSession();
+  updateRollLockUI();
+}
+
 // ── Slot number selection ─────────────────────────────────────────────────────
 
 function selectNumber(slot) {
+  if (rollsLocked) return;
+
   // Build the pool of taken numbers (previously used + the other slot's current pick)
   var taken = usedNums.slice();
   var otherNum = (slot === 1) ? currentNum2 : currentNum1;
@@ -56,12 +78,49 @@ function selectNumber(slot) {
   // Close review form if it was open for this slot
   if (activeSlot === slot) closeReviewForm();
 
+  // Persist the new slot selections
+  saveSession();
+
   // Fetch prices
   renderPriceTracker(num, slot);
 
   // Update whisky list tasted count in nav
   updateReviewNavBadge();
   renderWhiskyList();
+}
+
+// ── Restore last session ──────────────────────────────────────────────────────
+
+function restoreSession() {
+  var raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return;
+  try {
+    var session = JSON.parse(raw);
+    rollsLocked = session.locked !== false; // default to locked if not set
+
+    [1, 2].forEach(function(slot) {
+      var num = slot === 1 ? session.num1 : session.num2;
+      if (num == null) return;
+
+      if (slot === 1) currentNum1 = num;
+      else currentNum2 = num;
+
+      var entry = entries[num] || {};
+      var whiskyName = entry.ed4 || entry.ed5 || '';
+
+      document.getElementById('slotNum' + slot).textContent = '#' + num;
+      document.getElementById('slotName' + slot).textContent = whiskyName;
+      document.getElementById('slotRng' + slot).innerHTML =
+        'Drawn last session — <span>' + num + '</span>';
+
+      var resultCard = document.getElementById('slotResult' + slot);
+      resultCard.classList.add('visible');
+
+      renderPriceTracker(num, slot);
+    });
+  } catch (e) {
+    // ignore corrupt data
+  }
 }
 
 // ── Review form ───────────────────────────────────────────────────────────────
@@ -112,5 +171,7 @@ loadDefaultEntries();
 renderWhiskyList();
 renderReviews();
 updateReviewNavBadge();
+restoreSession();
+updateRollLockUI();
 syncPull();
 showPage('home');
