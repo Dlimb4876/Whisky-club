@@ -711,9 +711,33 @@ footer {
 .slot-result-card {
   display: none;
   text-align: center;
+  position: relative;
 }
 
-.slot-result-card.visible { display: block; }
+.slot-result-card.visible {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.btn-slot-clear {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  color: #5a3010;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  line-height: 1;
+  border-radius: 3px;
+}
+
+.btn-slot-clear:hover {
+  color: #c8922a;
+  background: #3c1800;
+}
 
 .slot-header {
   display: flex;
