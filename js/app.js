@@ -96,7 +96,7 @@ function restoreSession() {
   if (!raw) return;
   try {
     var session = JSON.parse(raw);
-    rollsLocked = session.locked !== false; // default to locked if not set
+    rollsLocked = session.locked === true; // default to unlocked if not set
 
     [1, 2].forEach(function(slot) {
       var num = slot === 1 ? session.num1 : session.num2;
