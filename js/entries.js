@@ -77,9 +77,19 @@ function renderWhiskyList() {
       reviewLink = '<button class="btn-view-review" onclick="viewReview(' + n + ')">📝 View Review</button>';
     }
 
+    var info = WHISKY_DATA[n] || {};
+    var regionHtml = info.region ? '<div class="wl-region">📍 ' + escHtml(info.region) + '</div>' : '';
+    var descHtml   = info.desc   ? '<div class="wl-desc">' + escHtml(info.desc) + '</div>' : '';
+    var priceHtml  = info.price  ? '<div class="wl-region" style="color:#f8d080;font-style:normal;">💰 ' + escHtml(info.price) + '</div>' : '';
+
     item.innerHTML =
       '<span class="wl-num">#' + n + '</span>' +
-      '<div class="wl-name">' + escHtml(e.ed4 || e.ed5 || '') + '</div>' +
+      '<div class="wl-name-block">' +
+        '<div class="wl-name">' + escHtml(e.ed4 || e.ed5 || '') + '</div>' +
+        regionHtml +
+        priceHtml +
+        descHtml +
+      '</div>' +
       '<div class="wl-actions">' +
         reviewLink +
         '<button class="btn-tasted' + (isTasted ? ' is-tasted' : '') + '" onclick="toggleTasted(' + n + ')">' +
