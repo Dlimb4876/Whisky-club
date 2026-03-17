@@ -40,6 +40,12 @@ async function saveReview() {
     timestamp: now.getTime()
   });
 
+  if (!usedNums.includes(currentNum)) {
+    usedNums.push(currentNum);
+    saveUsed();
+    renderWhiskyList();
+  }
+
   saveReviewsLocal();
   renderReviews();
   closeReviewForm();
