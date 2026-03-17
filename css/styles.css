@@ -1119,6 +1119,19 @@ footer {
   transition: background 0.15s;
 }
 .ai-buy-link:hover { background: #f8d080; }
+.btn-price-retry {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  background: transparent;
+  border: 1px solid #8b5030;
+  border-radius: 4px;
+  color: #b09070;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-price-retry:hover { border-color: #c8922a; color: #f8d080; }
 .ai-note {
   color: #8b5030;
   font-size: 0.78rem;

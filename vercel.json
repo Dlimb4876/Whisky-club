@@ -3,6 +3,9 @@
   "functions": {
     "api/gemini-search.js": {
       "runtime": "nodejs18.x"
+    },
+    "api/price-scrape.js": {
+      "runtime": "nodejs18.x"
     }
   },
   "routes": [
