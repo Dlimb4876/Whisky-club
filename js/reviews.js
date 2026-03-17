@@ -42,9 +42,8 @@ async function saveReview() {
 
   saveReviewsLocal();
   renderReviews();
-  document.getElementById('reviewForm').classList.remove('visible');
+  closeReviewForm();
   await syncPush();
-  document.getElementById('reviewsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function deleteReview(index) {
@@ -68,17 +67,17 @@ function clearReviews() {
 
 function renderReviews() {
   const container = document.getElementById('reviewsList');
-  const section   = document.getElementById('reviewsSection');
   const badge     = document.getElementById('reviewCountBadge');
 
-  badge.textContent = reviews.length;
+  if (badge) badge.textContent = reviews.length;
+  if (typeof updateReviewNavBadge === 'function') updateReviewNavBadge();
+
+  if (!container) return;
 
   if (reviews.length === 0) {
-    section.classList.remove('visible');
+    container.innerHTML = '<p class="no-reviews">No tasting notes yet.</p>';
     return;
   }
-
-  section.classList.add('visible');
 
   const search    = (document.getElementById('filterSearch').value || '').toLowerCase().trim();
   const sortOrder = document.getElementById('sortOrder').value || 'date-desc';

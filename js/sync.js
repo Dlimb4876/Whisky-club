@@ -24,7 +24,8 @@ async function syncPull() {
     saveUsed();
     renderEntries();
     renderReviews();
-    if (currentNum !== null) renderPriceTracker(currentNum);
+    if (currentNum1 !== null) renderPriceTracker(currentNum1, 1);
+    if (currentNum2 !== null) renderPriceTracker(currentNum2, 2);
     setSyncStatus('ok', '✓ Synced');
   } catch (e) {
     setSyncStatus('err', '✗ Sync error');

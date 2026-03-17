@@ -1,75 +1,89 @@
-// ── AI Price Search (Gemini via Backend Proxy) ──────────────────────────────────────────────
+// ── Price Search (Amazon UK + Masters of Malt via Gemini) ─────────────────────
 
-// API endpoint (configured in env.js)
 var API_BASE_URL = (window.ENV && window.ENV.API_BASE_URL) || '/api';
 
-function renderPriceTracker(num) {
-  document.getElementById('aiSearchResult').innerHTML = '';
-  searchWhiskyPriceWithAI();
+function renderPriceTracker(num, slot) {
+  var entry = entries[num] || {};
+  var whiskyName = entry.ed4 || entry.ed5 || '';
+  if (!whiskyName) return;
+  var containerEl = document.getElementById('priceResult' + slot);
+  if (!containerEl) return;
+  searchWhiskyPrices(whiskyName, containerEl);
 }
 
-async function searchWhiskyPriceWithAI() {
-  if (currentNum === null) return;
-  var entry = entries[currentNum] || {};
-  var whiskyName = entry.ed4 || entry.ed5 || '';
-  if (!whiskyName) {
-    document.getElementById('aiSearchResult').innerHTML =
-      '<p class="no-prices">No whisky name found for this entry.</p>';
-    return;
-  }
+async function searchWhiskyPrices(whiskyName, containerEl) {
+  containerEl.innerHTML = '<p class="ai-searching">🔍 Fetching prices…</p>';
 
-  var resultEl = document.getElementById('aiSearchResult');
-  resultEl.innerHTML = '<p class="ai-searching">🔍 Searching for the best UK price…</p>';
+  var safeName = whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  var prompt =
+    'Find the current UK retail price for "' + safeName + '" whisky.\n' +
+    'Search specifically on:\n' +
+    '1. Amazon UK (amazon.co.uk)\n' +
+    '2. Master of Malt (masterofmalt.com)\n\n' +
+    'End your response with exactly these two lines (fill in real values):\n' +
+    'AMAZON: [price e.g. £45.95 or N/A] | [direct product URL on amazon.co.uk or N/A]\n' +
+    'MASTERSOFMALT: [price e.g. £42.00 or N/A] | [direct product URL on masterofmalt.com or N/A]';
 
   try {
-    var prompt = 'Find the cheapest current UK price for "' + whiskyName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '" whisky. Check retailers like The Whisky Exchange, Master of Malt, Amazon UK, and others. End your response with exactly this line (fill in real values):\nRESULT: [price e.g. £45.95] | [retailer name] | [direct product URL]';
-
-    var resp = await fetch(
-      API_BASE_URL + '/gemini-search',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt })
-      }
-    );
+    var resp = await fetch(API_BASE_URL + '/gemini-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt })
+    });
 
     if (!resp.ok) {
       var errBody = await resp.json().catch(function() { return {}; });
-      var errMsg  = (errBody.error) ? errBody.error : 'API error ' + resp.status;
-      throw new Error(errMsg);
+      throw new Error(errBody.error || 'API error ' + resp.status);
     }
 
     var data      = await resp.json();
     var candidate = (data.candidates || [])[0];
     var parts     = (candidate && candidate.content && candidate.content.parts) || [];
     var textParts = parts.filter(function(p) { return p.text; });
-    if (textParts.length === 0) throw new Error('No text response received from AI.');
+    if (!textParts.length) throw new Error('No text response from AI.');
 
-    var text        = textParts[textParts.length - 1].text;
-    var resultMatch = text.match(/RESULT:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(https?:\/\/\S+)/i);
+    var text = textParts[textParts.length - 1].text;
 
-    if (resultMatch) {
-      var price    = resultMatch[1].trim();
-      var retailer = resultMatch[2].trim();
-      var url      = resultMatch[3].replace(/[.,)>]+$/, '').trim();
-      resultEl.innerHTML =
-        '<div class="ai-result-card">' +
-        '<span class="ai-price">'    + escHtml(price)    + '</span>' +
-        '<span class="ai-retailer">' + escHtml(retailer) + '</span>' +
-        '<a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ai-buy-link">Buy Now →</a>' +
-        '</div>';
-    } else {
-      // Fallback: extract any price + URL from text
-      var priceMatch = text.match(/£[\d,]+\.?\d*/);
-      var urlMatch   = text.match(/https?:\/\/[^\s<>"')]+/);
-      resultEl.innerHTML =
-        '<div class="ai-result-card">' +
-        (priceMatch ? '<span class="ai-price">' + escHtml(priceMatch[0]) + '</span>' : '') +
-        (urlMatch   ? '<a href="' + escHtml(urlMatch[0].replace(/[.,)>]+$/, '')) + '" target="_blank" rel="noopener noreferrer" class="ai-buy-link">Buy Now →</a>' : '') +
-        '<span class="ai-note">' + escHtml(text.slice(0, 300)) + '</span>' +
-        '</div>';
+    var amazonMatch = text.match(/AMAZON:\s*(.+?)\s*\|\s*(\S+)/i);
+    var momMatch    = text.match(/MASTERSOFMALT:\s*(.+?)\s*\|\s*(\S+)/i);
+
+    var html = '<div class="price-results">';
+
+    if (amazonMatch) {
+      var aPrice = amazonMatch[1].trim();
+      var aUrl   = amazonMatch[2].replace(/[.,)>]+$/, '').trim();
+      html += buildPriceRow('Amazon', 'amazon', aPrice, aUrl);
     }
+
+    if (momMatch) {
+      var mPrice = momMatch[1].trim();
+      var mUrl   = momMatch[2].replace(/[.,)>]+$/, '').trim();
+      html += buildPriceRow('Masters of Malt', 'mom', mPrice, mUrl);
+    }
+
+    if (!amazonMatch && !momMatch) {
+      html += '<p class="no-prices">Could not find prices for this whisky.</p>';
+    }
+
+    html += '</div>';
+    containerEl.innerHTML = html;
+
   } catch (err) {
-    resultEl.innerHTML = '<p class="no-prices">Error: ' + escHtml(err.message || 'Unknown error') + '</p>';
+    containerEl.innerHTML = '<p class="no-prices">Error: ' + escHtml(err.message || 'Unknown error') + '</p>';
   }
+}
+
+function buildPriceRow(retailerName, retailerClass, price, url) {
+  var isNA = !url || url === 'N/A' || price === 'N/A';
+  var priceHtml = isNA
+    ? '<span class="price-na">Not listed</span>'
+    : '<span class="price-amount-val">' + escHtml(price) + '</span>';
+  var linkHtml = (!isNA && url.startsWith('http'))
+    ? '<a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer" class="ai-buy-link">Buy →</a>'
+    : '';
+  return '<div class="price-row price-row--' + retailerClass + '">' +
+    '<span class="price-retailer-name">' + escHtml(retailerName) + '</span>' +
+    priceHtml +
+    linkHtml +
+    '</div>';
 }

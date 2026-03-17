@@ -1,41 +1,116 @@
-// ── Number selection ──────────────────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────────────
 
-function selectNumber() {
-  const available = Object.keys(entries).map(Number)
-    .filter(function(n) { return !usedNums.includes(n); });
-  if (available.length === 0) return;
+function showPage(name) {
+  ['home', 'whisky-list', 'reviews'].forEach(function(p) {
+    var page = document.getElementById('page-' + p);
+    if (page) page.style.display = (p === name) ? '' : 'none';
+    var btn = document.getElementById('nav-' + p);
+    if (btn) btn.classList.toggle('active', p === name);
+  });
+  if (name === 'whisky-list') renderWhiskyList();
+  if (name === 'reviews') renderReviews();
+}
 
-  const idx = Math.floor(Math.random() * available.length);
-  const num = available[idx];
-  currentNum = num;
+// ── Slot number selection ─────────────────────────────────────────────────────
 
+function selectNumber(slot) {
+  // Build the pool of taken numbers (previously used + the other slot's current pick)
+  var taken = usedNums.slice();
+  var otherNum = (slot === 1) ? currentNum2 : currentNum1;
+  if (otherNum !== null && !taken.includes(otherNum)) taken.push(otherNum);
+
+  var available = Object.keys(entries).map(Number)
+    .filter(function(n) { return !taken.includes(n); });
+
+  if (available.length === 0) {
+    alert('No more whiskies available to draw!');
+    return;
+  }
+
+  var idx = Math.floor(Math.random() * available.length);
+  var num = available[idx];
+
+  if (slot === 1) currentNum1 = num;
+  else currentNum2 = num;
+
+  // Mark as used
   if (!usedNums.includes(num)) {
     usedNums.push(num);
     saveUsed();
     syncPush();
   }
 
-  const entry = entries[num];
-  document.getElementById('resultNumber').textContent = '#' + num;
-  document.getElementById('resultEditions').innerHTML =
-    '<div class="result-edition"><span class="ed-name">' + escHtml(entry.ed4) + '</span></div>';
-  document.getElementById('rngDisplay').innerHTML =
-    'Number: <span>' + num + '</span> · drawn from <span>' + available.length + '</span> available';
+  var entry = entries[num] || {};
+  var whiskyName = entry.ed4 || entry.ed5 || '';
 
-  document.getElementById('resultCard').classList.add('visible');
+  // Update slot display
+  document.getElementById('slotNum' + slot).textContent = '#' + num;
+  document.getElementById('slotName' + slot).textContent = whiskyName;
+  document.getElementById('slotRng' + slot).innerHTML =
+    'Number <span>' + num + '</span> drawn from <span>' + available.length + '</span> available';
+
+  // Show the result card
+  var resultCard = document.getElementById('slotResult' + slot);
+  resultCard.classList.add('visible');
+
+  // Close review form if it was open for this slot
+  if (activeSlot === slot) closeReviewForm();
+
+  // Fetch prices
+  renderPriceTracker(num, slot);
+
+  // Update whisky list tasted count in nav
+  updateReviewNavBadge();
+  renderWhiskyList();
+}
+
+// ── Review form ───────────────────────────────────────────────────────────────
+
+function openReviewForm(slot) {
+  var num = (slot === 1) ? currentNum1 : currentNum2;
+  if (num === null) return;
+
+  activeSlot = slot;
+  currentNum = num;
+
+  var entry = entries[num] || {};
+  var whiskyName = entry.ed4 || entry.ed5 || '';
+  document.getElementById('reviewFormWhisky').textContent = whiskyName ? '— ' + whiskyName : '';
+
   resetRatings();
   buildPersonRatingRows();
   document.getElementById('reviewNotes').value = '';
+
+  var form = document.getElementById('reviewForm');
+  form.classList.add('visible');
+  document.getElementById('reviewNotes').focus();
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeReviewForm() {
   document.getElementById('reviewForm').classList.remove('visible');
-  renderPriceTracker(num);
-  renderEntries();
-  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  activeSlot = null;
+}
+
+// ── Nav badge ─────────────────────────────────────────────────────────────────
+
+function updateReviewNavBadge() {
+  var badge = document.getElementById('reviewNavBadge');
+  if (!badge) return;
+  if (reviews.length > 0) {
+    badge.textContent = reviews.length;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 resetRatings();
 loadDefaultEntries();
-renderEntries();
+renderWhiskyList();
 renderReviews();
+updateReviewNavBadge();
 syncPull();
+showPage('home');

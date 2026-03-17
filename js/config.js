@@ -122,5 +122,8 @@ let usedNums = [];
 let reviews  = JSON.parse(localStorage.getItem(REVIEWS_KEY)  || '[]');
 let prices   = JSON.parse(localStorage.getItem(PRICES_KEY)   || '[]');
 
-let currentNum     = null;
+let currentNum     = null; // set to the active slot's number when reviewing
+let currentNum1    = null; // slot 1 selected number
+let currentNum2    = null; // slot 2 selected number
+let activeSlot     = null; // which slot's review form is open (1 or 2)
 let currentRatings = {};
