@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Whisky Club Selector</title>
+  <title>Whisky Club</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -13,78 +13,110 @@
     <p>Pick a number, taste the dram</p>
   </header>
 
+  <nav class="main-nav">
+    <button class="nav-btn active" id="nav-home" onclick="showPage('home')">🏠 Next Club</button>
+    <button class="nav-btn" id="nav-whisky-list" onclick="showPage('whisky-list')">📋 Whisky List</button>
+    <button class="nav-btn" id="nav-reviews" onclick="showPage('reviews')">✍️ Reviews <span id="reviewNavBadge" class="nav-badge" style="display:none"></span></button>
+  </nav>
+
   <div class="container">
 
-    <!-- Entries list -->
-    <div class="card">
-      <div class="header-row">
-        <h2>Whisky Entries</h2>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
-          <span class="count-badge" id="entryCountBadge">0 entries</span>
-          <button class="btn-clear" onclick="resetEntries()">Reset</button>
+    <!-- ── HOME PAGE ─────────────────────────────────────────────────────── -->
+    <div id="page-home" class="page">
+
+      <div class="slots-row">
+
+        <!-- Slot 1 -->
+        <div class="slot-col">
+          <button class="btn-generate" id="generateBtn1" onclick="selectNumber(1)">🎲 Generate Whisky 1</button>
+          <div class="card slot-result-card" id="slotResult1">
+            <div class="slot-header">
+              <span class="slot-label">Whisky 1</span>
+              <div class="slot-number" id="slotNum1"></div>
+            </div>
+            <div class="slot-name" id="slotName1"></div>
+            <div class="slot-rng" id="slotRng1"></div>
+            <div class="price-tracker" id="priceTracker1">
+              <div class="price-tracker-hdr"><h3>💰 Prices</h3></div>
+              <div id="priceResult1"></div>
+            </div>
+            <button class="btn-secondary" onclick="openReviewForm(1)" style="margin-top:0.8rem">✍️ Add Tasting Notes</button>
+          </div>
         </div>
-      </div>
-      <div class="entries-list" id="entriesList"></div>
-    </div>
 
-    <!-- Select button -->
-    <button class="btn-select" id="selectBtn" onclick="selectNumber()" disabled>
-      🎲 Pick Tonight's Number
-    </button>
-
-    <!-- Result + inline review form -->
-    <div class="card result-card" id="resultCard">
-      <h2>Tonight's Dram</h2>
-      <div class="result-number" id="resultNumber"></div>
-      <div class="result-sub">Sláinte! 🥃</div>
-      <div class="result-editions" id="resultEditions"></div>
-      <div class="rng-display" id="rngDisplay"></div>
-
-      <!-- Price Tracker -->
-      <div class="price-tracker" id="priceTracker">
-        <div class="price-tracker-hdr">
-          <h3>💰 Best Price</h3>
+        <!-- Slot 2 -->
+        <div class="slot-col">
+          <button class="btn-generate" id="generateBtn2" onclick="selectNumber(2)">🎲 Generate Whisky 2</button>
+          <div class="card slot-result-card" id="slotResult2">
+            <div class="slot-header">
+              <span class="slot-label">Whisky 2</span>
+              <div class="slot-number" id="slotNum2"></div>
+            </div>
+            <div class="slot-name" id="slotName2"></div>
+            <div class="slot-rng" id="slotRng2"></div>
+            <div class="price-tracker" id="priceTracker2">
+              <div class="price-tracker-hdr"><h3>💰 Prices</h3></div>
+              <div id="priceResult2"></div>
+            </div>
+            <button class="btn-secondary" onclick="openReviewForm(2)" style="margin-top:0.8rem">✍️ Add Tasting Notes</button>
+          </div>
         </div>
-        <div id="aiSearchResult"></div>
+
       </div>
 
-      <button class="btn-secondary" onclick="toggleReviewForm()" style="margin-top:1rem;">✍️ Add Tasting Notes</button>
-
-      <div class="review-form" id="reviewForm">
-        <h3>Rate &amp; Review</h3>
+      <!-- Shared review form -->
+      <div class="card review-form" id="reviewForm">
+        <h3>Rate &amp; Review <span id="reviewFormWhisky" class="review-form-whisky"></span></h3>
         <div class="person-ratings" id="personRatings"></div>
         <div class="avg-display" id="avgDisplay">Average: <span class="avg-val">—</span></div>
         <textarea id="reviewNotes" placeholder="Tasting notes… e.g. rich dried fruit, hint of peat, long finish" aria-label="Tasting notes" style="margin-top:0.6rem;"></textarea>
         <div class="review-actions">
           <button class="btn-add" onclick="saveReview()">Save Review</button>
-          <button class="btn-clear" onclick="toggleReviewForm()">Cancel</button>
+          <button class="btn-clear" onclick="closeReviewForm()">Cancel</button>
         </div>
+      </div>
+
+    </div>
+
+    <!-- ── WHISKY LIST PAGE ───────────────────────────────────────────────── -->
+    <div id="page-whisky-list" class="page" style="display:none">
+      <div class="card">
+        <div class="header-row">
+          <h2>📋 Whisky List</h2>
+          <span class="count-badge" id="whiskyListBadge">0 tasted</span>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="whiskyListSearch" placeholder="🔍 Filter by name or number…" oninput="renderWhiskyList()" aria-label="Filter whisky list" />
+        </div>
+        <div id="whiskyListContainer"></div>
       </div>
     </div>
 
-    <!-- Reviews history -->
-    <div class="card reviews-section" id="reviewsSection">
-      <div class="header-row">
-        <h2>Tasting Notes</h2>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
-          <span class="count-badge" id="reviewCountBadge">0</span>
-          <span class="sync-status off" id="syncStatus">⟳</span>
-          <button class="btn-icon" onclick="syncPull()" title="Refresh from cloud">↻ Refresh</button>
-          <button class="btn-clear" onclick="clearReviews()">Clear all</button>
+    <!-- ── REVIEWS PAGE ──────────────────────────────────────────────────── -->
+    <div id="page-reviews" class="page" style="display:none">
+      <div class="card">
+        <div class="header-row">
+          <h2>✍️ Tasting Notes</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span class="count-badge" id="reviewCountBadge">0</span>
+            <span class="sync-status off" id="syncStatus">⟳</span>
+            <button class="btn-icon" onclick="syncPull()" title="Refresh from cloud">↻ Refresh</button>
+            <button class="btn-clear" onclick="clearReviews()">Clear all</button>
+          </div>
         </div>
+        <div class="filter-bar">
+          <input type="text" id="filterSearch" placeholder="🔍 Filter by #number or whisky name…" oninput="renderReviews()" aria-label="Filter reviews by number or whisky name" />
+          <select id="sortOrder" onchange="renderReviews()" aria-label="Sort reviews by">
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="num-asc">Number ↑</option>
+            <option value="num-desc">Number ↓</option>
+            <option value="rating-desc">Rating ↓</option>
+            <option value="rating-asc">Rating ↑</option>
+          </select>
+        </div>
+        <div id="reviewsList"></div>
       </div>
-      <div class="filter-bar">
-        <input type="text" id="filterSearch" placeholder="🔍 Filter by #number or whisky name…" oninput="renderReviews()" aria-label="Filter reviews by number or whisky name" />
-        <select id="sortOrder" onchange="renderReviews()" aria-label="Sort reviews by">
-          <option value="date-desc">Newest first</option>
-          <option value="date-asc">Oldest first</option>
-          <option value="num-asc">Number ↑</option>
-          <option value="num-desc">Number ↓</option>
-          <option value="rating-desc">Rating ↓</option>
-          <option value="rating-asc">Rating ↑</option>
-        </select>
-      </div>
-      <div id="reviewsList"></div>
     </div>
 
   </div>
