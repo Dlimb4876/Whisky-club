@@ -102,7 +102,7 @@ const WHISKY_LIST = [
   'Mackmyra Svensk Ek (Sweden)'
 ];
 
-// ── Whisky info (region, description, avg GBP price) ─────────────────────────
+// ── Whisky info (region, description, avg UK/GBP price) ──────────────────────
 const WHISKY_DATA = {
   1:  { region: 'Islay, Scotland',           price: '£38',  desc: 'Intensely peated with medicinal iodine, seaweed, and bonfire smoke followed by a sweet vanilla finish.' },
   2:  { region: 'Islay, Scotland',           price: '£68',  desc: 'Rich and elegant peat smoke with dark dried fruit, sea salt, and a long warming finish.' },

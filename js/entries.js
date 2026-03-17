@@ -80,7 +80,7 @@ function renderWhiskyList() {
     var info = WHISKY_DATA[n] || {};
     var regionHtml = info.region ? '<div class="wl-region">📍 ' + escHtml(info.region) + '</div>' : '';
     var descHtml   = info.desc   ? '<div class="wl-desc">' + escHtml(info.desc) + '</div>' : '';
-    var priceHtml  = info.price  ? '<div class="wl-region" style="color:#f8d080;font-style:normal;">💰 ' + escHtml(info.price) + '</div>' : '';
+    var priceHtml  = info.price  ? '<div class="wl-region" style="color:#f8d080;font-style:normal;">💰 UK avg: ' + escHtml(info.price) + '</div>' : '';
 
     item.innerHTML =
       '<span class="wl-num">#' + n + '</span>' +

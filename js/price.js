@@ -14,6 +14,6 @@ function renderPriceTracker(num, slot) {
     '<div class="whisky-info-panel">' +
       '<div class="whisky-info-region">📍 ' + escHtml(data.region) + '</div>' +
       '<p class="whisky-info-desc">' + escHtml(data.desc) + '</p>' +
-      '<div class="whisky-info-price">💰 Avg. price: <span class="whisky-price-val">' + escHtml(data.price) + '</span></div>' +
+      '<div class="whisky-info-price">💰 Avg. UK price: <span class="whisky-price-val">' + escHtml(data.price) + '</span></div>' +
     '</div>';
 }
