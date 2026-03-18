@@ -55,13 +55,6 @@ function selectNumber(slot) {
   if (slot === 1) currentNum1 = num;
   else currentNum2 = num;
 
-  // Mark as used
-  if (!usedNums.includes(num)) {
-    usedNums.push(num);
-    saveUsed();
-    syncPush();
-  }
-
   var entry = entries[num] || {};
   var whiskyName = entry.ed4 || entry.ed5 || '';
 
@@ -94,11 +87,6 @@ function selectNumber(slot) {
 function clearSlot(slot) {
   var num = (slot === 1) ? currentNum1 : currentNum2;
   if (num === null) return;
-
-  // Remove from used so it goes back into the available pool
-  usedNums = usedNums.filter(function(n) { return n !== num; });
-  saveUsed();
-  syncPush();
 
   if (slot === 1) currentNum1 = null;
   else currentNum2 = null;
