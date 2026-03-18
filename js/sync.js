@@ -18,6 +18,15 @@ async function syncPull() {
     prices   = Array.isArray(data.record.prices)   ? data.record.prices   : [];
     if (data.record.entries  && typeof data.record.entries  === 'object') entries  = data.record.entries;
     if (Array.isArray(data.record.usedNums)) usedNums = data.record.usedNums;
+    if (data.record.session  && typeof data.record.session  === 'object') {
+      var s = data.record.session;
+      currentNum1  = s.num1  != null ? s.num1  : currentNum1;
+      currentNum2  = s.num2  != null ? s.num2  : currentNum2;
+      rollsLocked  = s.locked === true;
+      saveSession();
+      restoreSession();
+      updateRollLockUI();
+    }
     saveReviewsLocal();
     savePricesLocal();
     saveEntries();
@@ -41,7 +50,7 @@ async function syncPush() {
         'Content-Type': 'application/json',
         'X-Master-Key': JSONBIN_KEY
       },
-      body: JSON.stringify({ reviews: reviews, prices: prices, entries: entries, usedNums: usedNums })
+      body: JSON.stringify({ reviews: reviews, prices: prices, entries: entries, usedNums: usedNums, session: { num1: currentNum1, num2: currentNum2, locked: rollsLocked } })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     setSyncStatus('ok', '✓ Synced');
