@@ -1,9 +1,24 @@
 // ── Entries management ────────────────────────────────────────────────────────
 
 function loadDefaultEntries() {
-  if (Object.keys(entries).length > 0) return;
+  var storedCount = Object.keys(entries).length;
+  var listCount = WHISKY_LIST.length;
+
+  if (storedCount > 0 && storedCount === listCount) {
+    var inSync = WHISKY_LIST.every(function(name, i) {
+      var e = entries[i + 1];
+      return e !== undefined && (e.ed4 === name || e.ed5 === name);
+    });
+    if (inSync) return;
+  }
+
   WHISKY_LIST.forEach(function(name, i) {
     entries[i + 1] = { ed4: name, ed5: name };
+  });
+  // Remove any stale entries beyond the current list length
+  Object.keys(entries).forEach(function(keyStr) {
+    var key = Number(keyStr);
+    if (key > WHISKY_LIST.length) delete entries[key];
   });
   saveEntries();
   renderWhiskyList();
