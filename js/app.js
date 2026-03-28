@@ -29,6 +29,7 @@ function rollNextSession() {
   rollsLocked = !rollsLocked;
   saveSession();
   updateRollLockUI();
+  syncPush();
 }
 
 // ── Slot number selection ─────────────────────────────────────────────────────
