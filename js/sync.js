@@ -41,6 +41,10 @@ async function syncPull() {
   }
 }
 
+function startSyncPolling(intervalMs) {
+  setInterval(syncPull, intervalMs || 30000);
+}
+
 async function syncPush() {
   setSyncStatus('busy', '⟳ Saving…');
   try {

@@ -72,8 +72,9 @@ function selectNumber(slot) {
   // Close review form if it was open for this slot
   if (activeSlot === slot) closeReviewForm();
 
-  // Persist the new slot selections
+  // Persist the new slot selections and push to cloud
   saveSession();
+  syncPush();
 
   // Fetch prices
   renderPriceTracker(num, slot);
@@ -100,6 +101,7 @@ function clearSlot(slot) {
   if (activeSlot === slot) closeReviewForm();
 
   saveSession();
+  syncPush();
   renderWhiskyList();
 }
 
@@ -188,4 +190,5 @@ updateReviewNavBadge();
 restoreSession();
 updateRollLockUI();
 syncPull();
+startSyncPolling();
 showPage('home');
