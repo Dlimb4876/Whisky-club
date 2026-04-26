@@ -22,7 +22,6 @@ function loadDefaultEntries() {
   });
   saveEntries();
   renderWhiskyList();
-  syncPush();
 }
 
 function resetEntries() {
